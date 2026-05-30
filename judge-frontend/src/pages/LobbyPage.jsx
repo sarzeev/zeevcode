@@ -97,8 +97,13 @@ export default function LobbyPage() {
 
       setStatus('found')
       setMessage('Match found. Preparing room...')
-      navigate(`/match/${newMatch.data.id}`, {
-        state: { username: trimmedUsername, userId: resolvedUserId },
+      navigate(`/profile/${resolvedUserId}`, {
+        state: {
+          username: trimmedUsername,
+          userId: resolvedUserId,
+          pendingMatchId: newMatch.data.id,
+          pendingMatchCreated: true,
+        },
       })
     } catch {
       setStatus('error')
