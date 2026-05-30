@@ -1,0 +1,47 @@
+# ZeevCode Project Context
+
+## What this project is
+A multiplayer competitive coding platform where two players race to solve the same DSA problem in real time.
+Think LeetCode but 1v1 (duel mode), with live code execution, WebSocket match rooms, and a rating system. Multiplayer beyond 2 players is a future feature — current scope is strictly duel (2 players only).
+
+## Tech Stack
+- Backend: Spring Boot 3.4.5, Java 21, Maven
+- Database: PostgreSQL 17, Flyway migrations (schema already created in V1__init_schema.sql)
+- ORM: Spring Data JPA + Hibernate 6
+- Security: Spring Security + OAuth2 Resource Server (Keycloak - not set up yet)
+- Real-time: Spring WebSocket + STOMP
+- Frontend: React + Vite, Tailwind v4, Monaco Editor, STOMP.js, Axios
+
+## Package structure
+com.project.zeevCode
+├── entity        → JPA entities mapping to DB tables
+├── repository    → Spring Data JPA interfaces only, no logic
+├── service       → All business logic lives here
+├── controller    → Thin REST controllers, just request/response
+├── dto           → Request and Response objects, never expose entities directly
+├── config        → Spring configuration classes (Security, WebSocket, CORS)
+└── websocket     → WebSocket handlers and message models
+
+## Database tables already created by Flyway
+- users: id(UUID), username, email, avatar_url, rating(default 1200), wins, losses, created_at
+- problems: id(UUID), title, slug, description, difficulty(EASY/MEDIUM/HARD), template_code, created_at
+- test_cases: id(UUID), problem_id(FK), input, expected, is_hidden(default false)
+- matches: id(UUID), problem_id(FK), player1_id(FK), player2_id(FK), winner_id(FK nullable), status(WAITING/IN_PROGRESS/FINISHED), started_at, finished_at, created_at
+- submissions: id(UUID), match_id(FK), user_id(FK), problem_id(FK), language(JAVA/PYTHON/CPP), code, status(PENDING/ACCEPTED/WRONG_ANSWER/RUNTIME_ERROR/TIME_LIMIT_EXCEEDED/COMPILE_ERROR), runtime_ms, submitted_at
+
+## Rules for code generation
+- Always use GenerationType.UUID for UUID primary keys, never @GenericGenerator
+- Always use Lombok: @Data @NoArgsConstructor @AllArgsConstructor @Builder on entities
+- Never use spring.jpa.hibernate.ddl-auto=create or update — Flyway manages schema
+- Security is disabled via autoconfigure.exclude for now — don't add security checks yet
+- Never expose JPA entities directly in REST responses — always use DTOs
+- Use @CreationTimestamp for created_at fields, always non-updatable
+- Enums for difficulty, language, status should be Java enums mapped with @Enumerated(EnumType.STRING)
+
+## Current state
+- Flyway V1 migration done — all tables exist in PostgreSQL
+- User.java entity created in com.project.zeevCode.entity
+- All packages created, app starts and connects to DB successfully
+
+## Who is guiding this project
+Claude (Anthropic) is acting as the architect and mentor. It gives task descriptions, explains the why and how, then provides precise prompts. Cursor executes those prompts. The developer (Sarjeev) reads and understands everything generated before moving forward.

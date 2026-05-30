@@ -1,0 +1,14 @@
+# Backend
+zeevCode/target/
+zeevCode/.idea/
+**/*.class
+
+# Frontend
+judge-frontend/node_modules/
+judge-frontend/dist/
+judge-frontend/.vite/
+
+# Environment
+application.properties
+*.env
+.env.local
