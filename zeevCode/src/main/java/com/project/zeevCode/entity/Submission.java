@@ -23,8 +23,8 @@ public class Submission {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "match_id", nullable = false)
+    @ManyToOne(optional = true)
+    @JoinColumn(name = "match_id", nullable = true)
     private Match match;
 
     @ManyToOne
