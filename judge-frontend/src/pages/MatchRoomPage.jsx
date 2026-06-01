@@ -76,6 +76,7 @@ export default function MatchRoomPage() {
   const [currentUser, setCurrentUser] = useState(null)
   const [playerRatings, setPlayerRatings] = useState({})
   const [actionMessage, setActionMessage] = useState('')
+  const [isRematchLoading, setIsRematchLoading] = useState(false)
   const [secondsLeft, setSecondsLeft] = useState(30 * 60)
   const matchStatus = match?.status ?? 'WAITING'
   const playerOne = match?.player1 ?? match?.playerOne ?? match?.user1 ?? match?.players?.[0]
@@ -278,7 +279,7 @@ export default function MatchRoomPage() {
     }
   }
 
-  async function handleSurrender(opponentId) {
+  async function handleSurrender(opponentIdToWin) {
     const confirmed = window.confirm('Are you sure? You will lose rating.')
 
     if (!confirmed) {
@@ -286,10 +287,32 @@ export default function MatchRoomPage() {
     }
 
     try {
-      await matchApi.finish(matchId, opponentId)
+      await matchApi.finish(matchId, opponentIdToWin)
       navigate('/')
     } catch {
       setActionMessage('Could not surrender match')
+    }
+  }
+
+  async function handleNewProblem() {
+    if (!opponentId || matchStatus !== 'FINISHED') {
+      return
+    }
+
+    try {
+      setIsRematchLoading(true)
+      setActionMessage('')
+      const newMatch = await matchApi.create({
+        player1Id: userId,
+        player2Id: opponentId,
+      })
+      await matchApi.start(newMatch.data.id)
+      navigate(`/match/${newMatch.data.id}`, {
+        state: { username, userId },
+      })
+    } catch {
+      setIsRematchLoading(false)
+      setActionMessage('Could not create rematch')
     }
   }
 
@@ -839,8 +862,14 @@ export default function MatchRoomPage() {
             <button className="action-button surrender-button" type="button" onClick={() => handleSurrender(opponentId)}>
               Surrender
             </button>
-            <button className="action-button new-problem-button" type="button" onClick={() => setActionMessage('Coming soon')}>
-              New Problem
+            <button
+              className="action-button new-problem-button"
+              type="button"
+              disabled={matchStatus !== 'FINISHED' || isRematchLoading}
+              onClick={handleNewProblem}
+              style={matchStatus !== 'FINISHED' && !isRematchLoading ? { opacity: 0.4, cursor: 'not-allowed' } : {}}
+            >
+              {isRematchLoading ? 'Loading...' : matchStatus !== 'FINISHED' ? 'Finish First' : 'New Problem'}
             </button>
           </div>
           <p className="action-message">{actionMessage}</p>
