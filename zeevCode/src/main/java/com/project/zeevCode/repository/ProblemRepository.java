@@ -10,4 +10,8 @@ import java.util.UUID;
 public interface ProblemRepository extends JpaRepository<Problem, UUID> {
     Optional<Problem> findBySlug(String slug);
     List<Problem> findByDifficulty(Difficulty difficulty);
+    List<Problem> findByIsActiveTrue();
+    Optional<Problem> findBySlugAndIsActiveTrue(String slug);
+    List<Problem> findByDifficultyAndIsActiveTrue(Difficulty difficulty);
+    boolean existsBySlug(String slug);
 }

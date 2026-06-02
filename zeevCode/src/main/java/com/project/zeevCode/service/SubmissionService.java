@@ -40,6 +40,21 @@ public class SubmissionService {
     }
 
     @Transactional
+    public Submission createPracticeSubmission(UUID userId, UUID problemId, String code, Language language) {
+        Submission submission = Submission.builder()
+                .match(null)
+                .user(userRepository.findById(userId)
+                        .orElseThrow(() -> new RuntimeException("User not found")))
+                .problem(problemRepository.findById(problemId)
+                        .orElseThrow(() -> new RuntimeException("Problem not found")))
+                .code(code)
+                .language(language)
+                .status(SubmissionStatus.PENDING)
+                .build();
+        return submissionRepository.save(submission);
+    }
+
+    @Transactional
     public Submission updateSubmissionStatus(UUID submissionId, SubmissionStatus status, Integer runtimeMs) {
         Submission submission = submissionRepository.findById(submissionId)
                 .orElseThrow(() -> new RuntimeException("Submission not found with id: " + submissionId));

@@ -9,4 +9,5 @@ public interface SubmissionRepository extends JpaRepository<Submission, UUID> {
     List<Submission> findByMatchId(UUID matchId);
     List<Submission> findByUserIdAndMatchId(UUID userId, UUID matchId);
     List<Submission> findByMatchIdOrderByCreatedAtAsc(UUID matchId);
+    long countByProblemId(UUID problemId);
 }

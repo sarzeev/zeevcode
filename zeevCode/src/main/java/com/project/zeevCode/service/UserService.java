@@ -24,6 +24,14 @@ public class UserService {
                 .orElseThrow(() -> new RuntimeException("User not found with username: " + username));
     }
 
+    public java.util.List<User> getLeaderboard() {
+        return userRepository.findTop3ByOrderByRatingDesc();
+    }
+
+    public java.util.Optional<User> getUserByFirebaseUid(String firebaseUid) {
+        return userRepository.findByFirebaseUid(firebaseUid);
+    }
+
     public boolean existsByUsername(String username) {
         return userRepository.existsByUsername(username);
     }
@@ -43,6 +51,28 @@ public class UserService {
                 .losses(0)
                 .build();
         return userRepository.save(user);
+    }
+
+    @Transactional
+    public User getOrCreateUserFromFirebase(String firebaseUid, String email, String name) {
+        return userRepository.findByFirebaseUid(firebaseUid).orElseGet(() -> {
+            String baseUsername = (name != null && !name.isBlank()) ? name.replaceAll("\\s+", "").toLowerCase() : email.split("@")[0];
+            String username = baseUsername;
+            int counter = 1;
+            while (userRepository.existsByUsername(username)) {
+                username = baseUsername + counter++;
+            }
+            User newUser = User.builder()
+                    .firebaseUid(firebaseUid)
+                    .username(username)
+                    .email(email)
+                    .rating(1200)
+                    .wins(0)
+                    .losses(0)
+                    .role((email != null && email.equalsIgnoreCase("sarzeev@gmail.com")) ? com.project.zeevCode.entity.UserRole.ADMIN : com.project.zeevCode.entity.UserRole.USER)
+                    .build();
+            return userRepository.save(newUser);
+        });
     }
 
     @Transactional

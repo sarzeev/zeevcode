@@ -9,4 +9,5 @@ import java.util.UUID;
 public interface MatchRepository extends JpaRepository<Match, UUID> {
     List<Match> findByPlayer1IdOrPlayer2Id(UUID player1Id, UUID player2Id);
     List<Match> findByStatus(MatchStatus status);
+    long countByProblemId(UUID problemId);
 }

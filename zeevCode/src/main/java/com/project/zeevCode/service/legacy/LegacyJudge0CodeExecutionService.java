@@ -1,4 +1,4 @@
-package com.project.zeevCode.service;
+package com.project.zeevCode.service.legacy;
 
 import com.project.zeevCode.enums.Language;
 import com.project.zeevCode.enums.SubmissionStatus;
@@ -10,12 +10,28 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
+import com.project.zeevCode.service.SubmissionService;
 
+/**
+ * ════════════════════════════════════════════════════════════════
+ * LEGACY IMPLEMENTATION — DO NOT DELETE WITHOUT ARCHITECTURAL REVIEW
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Originally used as ZeevCode's execution engine.
+ *
+ * Reason retained:
+ *   • Learning and documentation
+ *   • Interview discussion — demonstrates migration decision-making
+ *
+ * Reason disabled:
+ *   • Stub implementation only, never fully integrated
+ *   • Replaced by: PistonExecutionProvider (sandboxed Docker execution)
+ */
 @Service
-@ConditionalOnProperty(name = "execution.engine", havingValue = "judge0")
+@ConditionalOnProperty(name = "execution.provider", havingValue = "legacy-judge0-disabled")
 @RequiredArgsConstructor
 @Slf4j
-public class Judge0CodeExecutionService implements CodeExecutionService {
+public class LegacyJudge0CodeExecutionService implements LegacyCodeExecutionService {
 
     @Lazy
     private final SubmissionService submissionService;

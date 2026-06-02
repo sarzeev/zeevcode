@@ -21,6 +21,9 @@ public class User {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
+    @Column(name = "firebase_uid", unique = true, length = 128)
+    private String firebaseUid;
+
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
@@ -38,6 +41,10 @@ public class User {
 
     @Column(nullable = false, columnDefinition = "int default 0")
     private int losses;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private UserRole role;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)

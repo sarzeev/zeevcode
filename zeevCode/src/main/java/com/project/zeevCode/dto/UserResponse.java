@@ -19,4 +19,5 @@ public class UserResponse {
     private int rating;
     private int wins;
     private int losses;
+    private String role;
 }

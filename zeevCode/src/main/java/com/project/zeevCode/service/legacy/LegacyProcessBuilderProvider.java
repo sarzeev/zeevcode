@@ -1,8 +1,12 @@
-package com.project.zeevCode.service;
+package com.project.zeevCode.service.legacy;
 
 import com.project.zeevCode.entity.TestCase;
 import com.project.zeevCode.enums.Language;
 import com.project.zeevCode.enums.SubmissionStatus;
+import com.project.zeevCode.service.MatchService;
+import com.project.zeevCode.service.ProblemService;
+import com.project.zeevCode.service.SubmissionService;
+import com.project.zeevCode.service.ExecutionProvider;
 import com.project.zeevCode.websocket.MatchMessage;
 import com.project.zeevCode.websocket.MatchWebSocketController;
 import lombok.RequiredArgsConstructor;
@@ -27,11 +31,31 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+/**
+ * ════════════════════════════════════════════════════════════════
+ * LEGACY IMPLEMENTATION — DO NOT DELETE WITHOUT ARCHITECTURAL REVIEW
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Originally used as ZeevCode's execution engine.
+ *
+ * Reason retained:
+ *   • Learning and documentation
+ *   • Interview discussion — demonstrates migration decision-making
+ *   • Migration history — shows evolution from ProcessBuilder → Piston
+ *   • Rollback capability — can be re-enabled via configuration
+ *
+ * Reason disabled:
+ *   • Security: no sandboxing, user code runs with server permissions
+ *   • Scalability: tied to host compilers, no resource isolation
+ *   • Replaced by: PistonExecutionProvider (sandboxed Docker execution)
+ *
+ * To re-enable: set execution.provider=legacy-processbuilder in application.properties
+ */
 @Service
-@ConditionalOnProperty(name = "execution.engine", havingValue = "local")
+@ConditionalOnProperty(name = "execution.provider", havingValue = "legacy-processbuilder")
 @RequiredArgsConstructor
 @Slf4j
-public class LocalCodeExecutionService implements CodeExecutionService {
+public class LegacyProcessBuilderProvider implements ExecutionProvider {
 
     @Lazy
     private final SubmissionService submissionService;

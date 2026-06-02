@@ -1,10 +1,11 @@
 package com.project.zeevCode.controller;
 
+import com.project.zeevCode.dto.PracticeSubmitRequest;
 import com.project.zeevCode.dto.SubmissionResponse;
 import com.project.zeevCode.dto.SubmitCodeRequest;
 import com.project.zeevCode.entity.Submission;
 import com.project.zeevCode.enums.Language;
-import com.project.zeevCode.service.CodeExecutionService;
+import com.project.zeevCode.service.ExecutionProvider;
 import com.project.zeevCode.service.SubmissionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,7 +23,7 @@ import java.util.stream.Collectors;
 public class SubmissionController {
 
     private final SubmissionService submissionService;
-    private final CodeExecutionService codeExecutionService;
+    private final ExecutionProvider executionProvider;
 
     @PostMapping
     public ResponseEntity<SubmissionResponse> createSubmission(@RequestBody @Valid SubmitCodeRequest request) {
@@ -34,11 +35,31 @@ public class SubmissionController {
                 Language.valueOf(request.getLanguage().toUpperCase())
         );
 
-        codeExecutionService.executeSubmission(
+        executionProvider.executeSubmission(
                 savedSubmission.getId(),
                 savedSubmission.getCode(),
                 savedSubmission.getLanguage(),
                 savedSubmission.getMatch().getId(),
+                savedSubmission.getUser().getId(),
+                savedSubmission.getProblem().getId()
+        );
+
+        return new ResponseEntity<>(mapToSubmissionResponse(savedSubmission), HttpStatus.CREATED);
+    }
+
+    @PostMapping("/practice")
+    public ResponseEntity<SubmissionResponse> createPracticeSubmission(@RequestBody @Valid PracticeSubmitRequest request) {
+        Submission savedSubmission = submissionService.createPracticeSubmission(
+                request.getUserId(),
+                request.getProblemId(),
+                request.getCode(),
+                Language.valueOf(request.getLanguage().toUpperCase())
+        );
+
+        executionProvider.executePracticeSubmission(
+                savedSubmission.getId(),
+                savedSubmission.getCode(),
+                savedSubmission.getLanguage(),
                 savedSubmission.getUser().getId(),
                 savedSubmission.getProblem().getId()
         );
@@ -61,7 +82,7 @@ public class SubmissionController {
     private SubmissionResponse mapToSubmissionResponse(Submission submission) {
         return SubmissionResponse.builder()
                 .id(submission.getId())
-                .matchId(submission.getMatch().getId())
+                .matchId(submission.getMatch() != null ? submission.getMatch().getId() : null)
                 .userId(submission.getUser().getId())
                 .problemId(submission.getProblem().getId())
                 .language(submission.getLanguage().name())

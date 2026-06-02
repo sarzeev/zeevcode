@@ -1,10 +1,10 @@
-package com.project.zeevCode.service;
+package com.project.zeevCode.service.legacy;
 
 import com.project.zeevCode.enums.Language;
 
 import java.util.UUID;
 
-public interface CodeExecutionService {
+public interface LegacyCodeExecutionService {
     void executeSubmission(UUID submissionId, String code, Language language,
                            UUID matchId, UUID userId, UUID problemId);
 

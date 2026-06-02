@@ -1,5 +1,7 @@
 # Backend
 zeevCode/target/
+secrets/
+*.json
 zeevCode/.idea/
 **/*.class
 

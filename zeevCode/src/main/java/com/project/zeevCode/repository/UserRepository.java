@@ -8,6 +8,10 @@ import java.util.UUID;
 public interface UserRepository extends JpaRepository<User, UUID> {
     Optional<User> findByUsername(String username);
     Optional<User> findByEmail(String email);
+    Optional<User> findByFirebaseUid(String firebaseUid);
     boolean existsByUsername(String username);
     boolean existsByEmail(String email);
+    
+    java.util.List<User> findTop3ByOrderByRatingDesc();
+    java.util.List<User> findByUsernameContainingIgnoreCase(String username);
 }

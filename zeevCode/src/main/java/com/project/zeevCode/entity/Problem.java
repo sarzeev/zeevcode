@@ -39,6 +39,15 @@ public class Problem {
     @Column(name = "template_code", columnDefinition = "TEXT", nullable = false)
     private String templateCode;
 
+    @Column(name = "time_limit", nullable = false, columnDefinition = "int default 2000")
+    private int timeLimit;
+
+    @Column(name = "memory_limit", nullable = false, columnDefinition = "int default 256")
+    private int memoryLimit;
+
+    @Column(name = "is_active", nullable = false, columnDefinition = "boolean default true")
+    private boolean isActive = true;
+
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;

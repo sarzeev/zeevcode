@@ -20,21 +20,25 @@ public class ProblemService {
     private final TestCaseRepository testCaseRepository;
 
     public List<Problem> getAllProblems() {
-        return problemRepository.findAll();
+        return problemRepository.findByIsActiveTrue();
     }
 
     public Problem getProblemById(UUID id) {
-        return problemRepository.findById(id)
+        Problem problem = problemRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Problem not found with id: " + id));
+        if (!problem.isActive()) {
+            throw new RuntimeException("Problem is archived");
+        }
+        return problem;
     }
 
     public Problem getProblemBySlug(String slug) {
-        return problemRepository.findBySlug(slug)
+        return problemRepository.findBySlugAndIsActiveTrue(slug)
                 .orElseThrow(() -> new RuntimeException("Problem not found with slug: " + slug));
     }
 
     public List<Problem> getProblemsByDifficulty(Difficulty difficulty) {
-        return problemRepository.findByDifficulty(difficulty);
+        return problemRepository.findByDifficultyAndIsActiveTrue(difficulty);
     }
 
     public List<TestCase> getVisibleTestCases(UUID problemId) {
@@ -47,7 +51,7 @@ public class ProblemService {
     public Problem getRandomProblem() {
         List<Problem> allProblems = getAllProblems();
         if (allProblems.isEmpty()) {
-            throw new RuntimeException("No problems found");
+            throw new RuntimeException("No active problems found");
         }
         return allProblems.get(new Random().nextInt(allProblems.size()));
     }

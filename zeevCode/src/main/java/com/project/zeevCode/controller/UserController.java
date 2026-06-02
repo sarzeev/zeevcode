@@ -27,6 +27,27 @@ public class UserController {
         return ResponseEntity.ok(mapToUserResponse(user));
     }
 
+    @GetMapping("/leaderboard")
+    public ResponseEntity<java.util.List<UserResponse>> getLeaderboard() {
+        return ResponseEntity.ok(
+                userService.getLeaderboard().stream()
+                        .map(this::mapToUserResponse)
+                        .toList()
+        );
+    }
+
+    @GetMapping("/me")
+    public ResponseEntity<UserResponse> getCurrentUser(org.springframework.security.core.Authentication authentication) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        String firebaseUid = jwt.getSubject();
+        return userService.getUserByFirebaseUid(firebaseUid)
+                .map(this::mapToUserResponse)
+                .map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/username/{username}")
     public ResponseEntity<UserResponse> getUserByUsername(@PathVariable String username) {
         try {
@@ -53,6 +74,7 @@ public class UserController {
                 .rating(user.getRating())
                 .wins(user.getWins())
                 .losses(user.getLosses())
+                .role(user.getRole() != null ? user.getRole().name() : "USER")
                 .build();
     }
 
