@@ -1,9 +1,10 @@
 # Backend
 zeevCode/target/
 secrets/
-*.json
 zeevCode/.idea/
+*.iml
 **/*.class
+**/*.exe
 
 # Frontend
 judge-frontend/node_modules/
@@ -11,6 +12,11 @@ judge-frontend/dist/
 judge-frontend/.vite/
 
 # Environment
-application.properties
 *.env
 .env.local
+
+# Application Logs
+logs/
+*.log
+
+target/

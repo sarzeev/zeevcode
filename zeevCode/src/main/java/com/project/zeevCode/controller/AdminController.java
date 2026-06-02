@@ -28,6 +28,7 @@ public class AdminController {
     private final UserRepository userRepository;
     private final MatchRepository matchRepository;
     private final SubmissionRepository submissionRepository;
+    private final com.project.zeevCode.service.UserService userService;
 
     // --- PROBLEM MANAGEMENT ---
     @GetMapping("/problems")
@@ -136,11 +137,56 @@ public class AdminController {
     }
 
     // --- USER MANAGEMENT ---
+    private UUID getAuthenticatedUserId() {
+        org.springframework.security.core.Authentication auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof org.springframework.security.oauth2.jwt.Jwt jwt) {
+            String firebaseUid = jwt.getSubject();
+            return userService.getUserByFirebaseUid(firebaseUid).map(User::getId).orElse(null);
+        }
+        return null;
+    }
+
     @GetMapping("/users")
     public ResponseEntity<List<User>> searchUsers(@RequestParam(required = false) String search) {
         if (search != null && !search.trim().isEmpty()) {
             return ResponseEntity.ok(userRepository.findByUsernameContainingIgnoreCase(search.trim()));
         }
         return ResponseEntity.ok(userRepository.findAll());
+    }
+
+    @PutMapping("/users/{id}/role")
+    public ResponseEntity<?> updateUserRole(@PathVariable UUID id, @RequestParam com.project.zeevCode.entity.UserRole role) {
+        try {
+            if (id.equals(getAuthenticatedUserId())) {
+                return ResponseEntity.badRequest().body("Cannot change your own role");
+            }
+            userService.updateUserRole(id, role);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage() != null ? e.getMessage() : "Failed to update role");
+        }
+    }
+
+    @PutMapping("/users/{id}/disable")
+    public ResponseEntity<?> disableUser(@PathVariable UUID id) {
+        try {
+            if (id.equals(getAuthenticatedUserId())) {
+                return ResponseEntity.badRequest().body("Cannot disable your own account");
+            }
+            userService.updateUserStatus(id, false);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(e.getMessage() != null ? e.getMessage() : "Failed to disable user");
+        }
+    }
+
+    @PutMapping("/users/{id}/enable")
+    public ResponseEntity<?> enableUser(@PathVariable UUID id) {
+        try {
+            userService.updateUserStatus(id, true);
+            return ResponseEntity.ok().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to enable user");
+        }
     }
 }

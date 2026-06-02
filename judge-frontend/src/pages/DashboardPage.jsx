@@ -89,7 +89,7 @@ export default function DashboardPage() {
     if (!dbUser) return;
     
     const client = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || 'http://localhost:8081/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         client.subscribe(`/topic/matchmaking/${dbUser.id}`, (message) => {
@@ -339,7 +339,7 @@ export default function DashboardPage() {
         <div className="nav-section">
           <div className="nav-title">User View</div>
           <a className="nav-link active">Dashboard</a>
-          <a className="nav-link" onClick={() => alert('Practice coming soon')}>Practice</a>
+          <a className="nav-link" onClick={handlePracticeMode}>Practice</a>
           <a className="nav-link" onClick={() => alert('Matches coming soon')}>Matches</a>
           <a className="nav-link" onClick={() => alert('Leaderboard coming soon')}>Leaderboard</a>
         </div>
@@ -473,7 +473,7 @@ export default function DashboardPage() {
                       <tr key={p.id}>
                         <td style={{ fontWeight: 'bold' }}>{p.title}</td>
                         <td style={{ color: getDifficultyColor(p.difficulty), fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{p.difficulty}</td>
-                        <td><button className="btn-solve" onClick={() => alert("Practice environment coming soon!")}>Solve</button></td>
+                        <td><button className="btn-solve" onClick={() => navigate(`/practice/${p.slug}`, { state: { userId: dbUser.id, username: dbUser.username } })}>Solve</button></td>
                       </tr>
                     ))
                   ) : (

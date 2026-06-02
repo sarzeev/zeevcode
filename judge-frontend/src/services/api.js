@@ -1,7 +1,7 @@
 import axios from 'axios'
 import { auth } from './firebase.js'
 
-const BASE_URL = 'http://localhost:8081'
+const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8081'
 const api = axios.create({
   baseURL: `${BASE_URL}/api`,
   headers: {
@@ -35,28 +35,28 @@ export const statsApi = {
 }
 
 export const problemApi = {
-  getAll: () => api.get('/api/problems'),
-  getBySlug: (slug) => api.get(`/api/problems/${slug}`),
-  getTestCases: (id) => api.get(`/api/problems/${id}/testcases`),
+  getAll: () => api.get('/problems'),
+  getBySlug: (slug) => api.get(`/problems/${slug}`),
+  getTestCases: (id) => api.get(`/problems/${id}/testcases`),
 }
 
 export const matchApi = {
-  create: (data) => api.post('/api/matches', data),
-  get: (id) => api.get(`/api/matches/${id}`),
-  getForUser: (userId) => api.get(`/api/matches/user/${userId}`),
-  start: (id) => api.post(`/api/matches/${id}/start`),
-  finish: (id, winnerId) => api.post(`/api/matches/${id}/finish?winnerId=${winnerId}`),
+  create: (data) => api.post('/matches', data),
+  get: (id) => api.get(`/matches/${id}`),
+  getForUser: (userId) => api.get(`/matches/user/${userId}`),
+  start: (id) => api.post(`/matches/${id}/start`),
+  finish: (id, winnerId) => api.post(`/matches/${id}/finish?winnerId=${winnerId}`),
 }
 
 export const matchmakingApi = {
-  join: (userId) => api.post(`/api/matchmaking/join?userId=${userId}`),
-  leave: (userId) => api.post(`/api/matchmaking/leave?userId=${userId}`),
+  join: (userId) => api.post(`/matchmaking/join?userId=${userId}`),
+  leave: (userId) => api.post(`/matchmaking/leave?userId=${userId}`),
 }
 
 export const submissionApi = {
-  submit: (data) => api.post('/api/submissions', data),
-  practiceSubmit: (data) => api.post('/api/submissions/practice', data),
-  getForMatch: (matchId) => api.get(`/api/submissions/match/${matchId}`),
+  submit: (data) => api.post('/submissions', data),
+  practiceSubmit: (data) => api.post('/submissions/practice', data),
+  getForMatch: (matchId) => api.get(`/submissions/match/${matchId}`),
 }
 
 export const adminApi = {
@@ -75,6 +75,9 @@ export const adminApi = {
 
   // Users
   searchUsers: (query) => api.get(`/admin/users${query ? `?search=${encodeURIComponent(query)}` : ''}`),
+  updateUserRole: (id, role) => api.put(`/admin/users/${id}/role?role=${role}`),
+  disableUser: (id) => api.put(`/admin/users/${id}/disable`),
+  enableUser: (id) => api.put(`/admin/users/${id}/enable`),
 }
 
 export default api

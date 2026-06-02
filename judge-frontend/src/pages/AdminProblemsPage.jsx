@@ -136,7 +136,7 @@ export default function AdminProblemsPage() {
       <header className="header">
         <div className="logo">Manage Problems</div>
         <div>
-          <button className="btn btn-red" onClick={() => navigate('/admin')} style={{ marginRight: '1rem' }}>Back</button>
+          <button className="btn btn-red" onClick={() => navigate('/admin')} style={{ marginRight: '1rem' }}>Back to Dashboard</button>
           <button className="btn btn-cyan" onClick={() => openModal()}>+ Add Problem</button>
         </div>
       </header>

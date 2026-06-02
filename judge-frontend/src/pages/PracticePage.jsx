@@ -87,7 +87,7 @@ export default function PracticePage() {
     if (!userId) return undefined
 
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || 'http://localhost:8081/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         stompClient.subscribe(`/topic/practice/${userId}`, (message) => {

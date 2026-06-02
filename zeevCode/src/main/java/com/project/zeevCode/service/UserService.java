@@ -95,4 +95,30 @@ public class UserService {
         user.setLosses(user.getLosses() + 1);
         userRepository.save(user);
     }
+
+    @Transactional
+    public void updateUserRole(UUID userId, com.project.zeevCode.entity.UserRole role) {
+        User user = getUserById(userId);
+        if (user.getRole() == com.project.zeevCode.entity.UserRole.ADMIN && role == com.project.zeevCode.entity.UserRole.USER) {
+            long adminCount = userRepository.countByRoleAndIsActiveTrue(com.project.zeevCode.entity.UserRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new RuntimeException("Cannot demote the last active admin");
+            }
+        }
+        user.setRole(role);
+        userRepository.save(user);
+    }
+
+    @Transactional
+    public void updateUserStatus(UUID userId, boolean isActive) {
+        User user = getUserById(userId);
+        if (user.getRole() == com.project.zeevCode.entity.UserRole.ADMIN && !isActive) {
+            long adminCount = userRepository.countByRoleAndIsActiveTrue(com.project.zeevCode.entity.UserRole.ADMIN);
+            if (adminCount <= 1) {
+                throw new RuntimeException("Cannot disable the last active admin");
+            }
+        }
+        user.setActive(isActive);
+        userRepository.save(user);
+    }
 }

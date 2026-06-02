@@ -116,7 +116,8 @@ export default function AdminTestCasesPage() {
       <header className="header">
         <div className="logo">Test Cases: {problem?.title || 'Loading...'}</div>
         <div>
-          <button className="btn btn-red" onClick={() => navigate('/admin/problems')} style={{ marginRight: '1rem' }}>Back</button>
+          <button className="btn btn-gray" onClick={() => navigate('/admin')} style={{ marginRight: '0.5rem' }}>Back to Dashboard</button>
+          <button className="btn btn-red" onClick={() => navigate('/admin/problems')} style={{ marginRight: '1rem' }}>Back to Problems</button>
           <button className="btn btn-cyan" onClick={() => openModal()}>+ Add Test Case</button>
         </div>
       </header>

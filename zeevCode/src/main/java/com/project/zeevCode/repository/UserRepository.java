@@ -14,4 +14,5 @@ public interface UserRepository extends JpaRepository<User, UUID> {
     
     java.util.List<User> findTop3ByOrderByRatingDesc();
     java.util.List<User> findByUsernameContainingIgnoreCase(String username);
+    long countByRoleAndIsActiveTrue(com.project.zeevCode.entity.UserRole role);
 }

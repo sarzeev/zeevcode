@@ -46,7 +46,7 @@ function getPlayerId(player) {
 }
 
 function getEventType(event) {
-  return event?.type ?? event?.eventType ?? event?.result ?? event?.status ?? ''
+  return event?.status ?? event?.type ?? event?.eventType ?? event?.result ?? ''
 }
 
 function formatTime(seconds) {
@@ -145,7 +145,7 @@ export default function MatchRoomPage() {
     }
 
     const stompClient = new Client({
-      webSocketFactory: () => new SockJS('http://localhost:8081/ws'),
+      webSocketFactory: () => new SockJS(import.meta.env.VITE_WS_URL || 'http://localhost:8081/ws'),
       reconnectDelay: 5000,
       onConnect: () => {
         stompClient.subscribe(`/topic/match/${matchId}`, (message) => {

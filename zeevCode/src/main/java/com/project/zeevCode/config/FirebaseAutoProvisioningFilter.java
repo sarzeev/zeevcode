@@ -35,6 +35,12 @@ public class FirebaseAutoProvisioningFilter extends OncePerRequestFilter {
                 try {
                     com.project.zeevCode.entity.User dbUser = userService.getOrCreateUserFromFirebase(firebaseUid, email, name);
                     
+                    if (!dbUser.isActive()) {
+                        log.warn("Attempt to authenticate disabled user: {}", dbUser.getUsername());
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Account disabled");
+                        return;
+                    }
+                    
                     // Inject DB role into SecurityContext
                     java.util.List<org.springframework.security.core.GrantedAuthority> authorities = 
                             java.util.List.of(new org.springframework.security.core.authority.SimpleGrantedAuthority("ROLE_" + dbUser.getRole().name()));

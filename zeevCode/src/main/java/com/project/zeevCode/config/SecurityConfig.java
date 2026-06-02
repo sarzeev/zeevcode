@@ -28,6 +28,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/users/username/**").permitAll() // Public profile viewing
                         .requestMatchers("/ws/**").permitAll() // WebSocket handshake
+                        .requestMatchers("/api/submissions/**").permitAll() // Temp test
+
+                        
                         .requestMatchers("/api/admin/**").hasRole("ADMIN") // Admin routes
                         .anyRequest().authenticated()
                 )

@@ -41,6 +41,29 @@ export default function AdminUsersPage() {
     fetchUsers(searchQuery)
   }
 
+  async function handleToggleRole(u) {
+    const newRole = u.role === 'ADMIN' ? 'USER' : 'ADMIN'
+    if (!window.confirm(`Change ${u.username}'s role to ${newRole}?`)) return
+    try {
+      await adminApi.updateUserRole(u.id, newRole)
+      fetchUsers(searchQuery)
+    } catch {
+      alert("Failed to update role")
+    }
+  }
+
+  async function handleToggleStatus(u) {
+    const action = u.active || u.isActive ? 'Disable' : 'Enable'
+    if (!window.confirm(`${action} user ${u.username}?`)) return
+    try {
+      if (action === 'Disable') await adminApi.disableUser(u.id)
+      else await adminApi.enableUser(u.id)
+      fetchUsers(searchQuery)
+    } catch {
+      alert(`Failed to ${action.toLowerCase()} user`)
+    }
+  }
+
   return (
     <div className="admin-page">
       <style>{`
@@ -52,6 +75,8 @@ export default function AdminUsersPage() {
         .btn-red:hover { background: var(--accent-red); color: white; }
         .btn-cyan { background: rgba(0, 212, 255, 0.1); color: var(--accent-cyan); border: 1px solid var(--accent-cyan); }
         .btn-cyan:hover { background: var(--accent-cyan); color: black; }
+        .btn-gray { background: rgba(255, 255, 255, 0.1); color: var(--text-secondary); border: 1px solid var(--text-secondary); font-size: 0.8rem; padding: 0.3rem 0.6rem; }
+        .btn-gray:hover { background: var(--text-secondary); color: black; }
         
         .search-bar { display: flex; gap: 1rem; margin-bottom: 2rem; }
         .search-input { flex: 1; padding: 0.8rem; border-radius: 4px; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; font-family: var(--font-mono); }
@@ -64,7 +89,7 @@ export default function AdminUsersPage() {
       <header className="header">
         <div className="logo">Manage Users</div>
         <div>
-          <button className="btn btn-red" onClick={() => navigate('/admin')}>Back</button>
+          <button className="btn btn-red" onClick={() => navigate('/admin')}>Back to Dashboard</button>
         </div>
       </header>
 
@@ -84,23 +109,33 @@ export default function AdminUsersPage() {
             <th>Username</th>
             <th>Email</th>
             <th>Role</th>
-            <th>Rating</th>
+            <th>Status</th>
             <th>W/L</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {users.map(u => (
-            <tr key={u.id}>
-              <td style={{ fontWeight: 'bold' }}>{u.username}</td>
-              <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
-              <td style={{ color: u.role === 'ADMIN' ? 'var(--accent-red)' : 'var(--accent-cyan)', fontWeight: 'bold' }}>{u.role}</td>
-              <td style={{ fontFamily: 'var(--font-mono)' }}>{u.rating}</td>
-              <td style={{ fontFamily: 'var(--font-mono)' }}>
-                <span style={{ color: 'var(--accent-green)' }}>{u.wins}W</span> / <span style={{ color: 'var(--accent-red)' }}>{u.losses}L</span>
-              </td>
-            </tr>
-          ))}
-          {users.length === 0 && <tr><td colSpan="5" style={{ textAlign: 'center' }}>No users found.</td></tr>}
+          {users.map(u => {
+            const active = u.active !== undefined ? u.active : (u.isActive !== undefined ? u.isActive : true);
+            return (
+              <tr key={u.id} style={{ opacity: active ? 1 : 0.5 }}>
+                <td style={{ fontWeight: 'bold' }}>{u.username}</td>
+                <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
+                <td style={{ color: u.role === 'ADMIN' ? 'var(--accent-red)' : 'var(--accent-cyan)', fontWeight: 'bold' }}>{u.role}</td>
+                <td style={{ color: active ? 'var(--accent-green)' : 'var(--accent-red)' }}>{active ? 'ACTIVE' : 'DISABLED'}</td>
+                <td style={{ fontFamily: 'var(--font-mono)' }}>
+                  <span style={{ color: 'var(--accent-green)' }}>{u.wins}W</span> / <span style={{ color: 'var(--accent-red)' }}>{u.losses}L</span>
+                </td>
+                <td style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button className="btn-gray" onClick={() => handleToggleRole(u)}>Toggle Role</button>
+                  <button className="btn-gray" onClick={() => handleToggleStatus(u)}>
+                    {active ? 'Disable' : 'Enable'}
+                  </button>
+                </td>
+              </tr>
+            )
+          })}
+          {users.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center' }}>No users found.</td></tr>}
         </tbody>
       </table>
     </div>
