@@ -496,7 +496,6 @@ export default function PracticePage() {
 
       {/* ─── Results Panel ─── */}
       <aside className="practice-panel results-panel" aria-label="Results">
-        <span className="practice-badge">⚡ PRACTICE MODE</span>
         <h2 className="panel-title">Results</h2>
         <p style={{ color: 'var(--text-secondary)', fontFamily: 'var(--font-mono)', fontSize: '0.78rem', marginTop: '0.5rem' }}>
           No rating changes. No opponent. Just you and the code.
