@@ -465,9 +465,10 @@ export default function DashboardPage() {
 
             <div className="panel">
               <h2 className="panel-title">Practice Problems</h2>
-              <table className="problems-table">
-                <thead><tr><th>Title</th><th>Difficulty</th><th>Action</th></tr></thead>
-                <tbody>
+              <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+                <table className="problems-table" style={{ marginTop: 0 }}>
+                  <thead><tr><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Title</th><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Difficulty</th><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Action</th></tr></thead>
+                  <tbody>
                   {problems.length > 0 ? (
                     problems.map(p => (
                       <tr key={p.id}>
@@ -481,6 +482,7 @@ export default function DashboardPage() {
                   )}
                 </tbody>
               </table>
+              </div>
             </div>
           </div>
 
