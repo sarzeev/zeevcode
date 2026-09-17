@@ -22,6 +22,7 @@ public class SubmissionService {
     private final ProblemRepository problemRepository;
     private final SubmissionRepository submissionRepository;
     private final MatchRepository matchRepository;
+    private final UserProblemProgressService userProblemProgressService;
 
     @Transactional
     public Submission createSubmission(UUID matchId, UUID userId, UUID problemId, String code, Language language) {
@@ -60,7 +61,16 @@ public class SubmissionService {
                 .orElseThrow(() -> new RuntimeException("Submission not found with id: " + submissionId));
         submission.setStatus(status);
         submission.setRuntimeMs(runtimeMs);
-        return submissionRepository.save(submission);
+        Submission saved = submissionRepository.save(submission);
+        
+        // Update user progress
+        userProblemProgressService.recordSubmissionAttempt(
+                saved.getUser().getId(), 
+                saved.getProblem().getId(), 
+                status == SubmissionStatus.ACCEPTED
+        );
+        
+        return saved;
     }
 
     public List<Submission> getSubmissionsForMatch(UUID matchId) {

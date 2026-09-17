@@ -26,6 +26,7 @@ public class SecurityConfig {
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/users/username/**").permitAll() // Public profile viewing
                         .requestMatchers("/ws/**").permitAll() // WebSocket handshake
                         .requestMatchers("/api/submissions/**").permitAll() // Temp test

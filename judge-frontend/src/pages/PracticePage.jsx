@@ -10,7 +10,36 @@ const resultLabels = {
   WRONG_ANSWER: { text: 'WRONG ANSWER', color: 'var(--accent-red)' },
   RUNTIME_ERROR: { text: 'RUNTIME ERROR', color: 'var(--accent-red)' },
   COMPILE_ERROR: { text: 'COMPILE ERROR', color: 'var(--accent-red)' },
-  TIME_LIMIT_EXCEEDED: { text: 'TIME LIMIT', color: '#ffd166' },
+  TIME_LIMIT_EXCEEDED: { text: 'TIME LIMIT EXCEEDED', color: '#ffd166' },
+}
+
+function normalizeResultStatus(rawStatus, message = '', runtimeMs = null, timeLimitMs = null) {
+  const status = String(rawStatus ?? '').trim().toUpperCase().replace(/[\s-]+/g, '_')
+  const msg = String(message ?? '').toLowerCase()
+
+  if (
+    status === 'TIME_LIMIT_EXCEEDED' ||
+    status === 'TLE' ||
+    status === 'TIME_LIMIT' ||
+    status === 'TIMEOUT' ||
+    msg.includes('time limit') ||
+    msg.includes('timed out') ||
+    msg.includes('timeout')
+  ) {
+    return 'TIME_LIMIT_EXCEEDED'
+  }
+
+  if (
+    runtimeMs != null &&
+    timeLimitMs != null &&
+    Number.isFinite(runtimeMs) &&
+    Number.isFinite(timeLimitMs) &&
+    runtimeMs > timeLimitMs
+  ) {
+    return 'TIME_LIMIT_EXCEEDED'
+  }
+
+  return status || 'UPDATE'
 }
 
 const languageMap = {
@@ -35,6 +64,7 @@ export default function PracticePage() {
   const userId = location.state?.userId || ''
   const username = location.state?.username || ''
   const editorRef = useRef(null)
+  const problemRef = useRef(null)
   const [problem, setProblem] = useState(null)
   const [testCases, setTestCases] = useState([])
   const [isLoading, setIsLoading] = useState(true)
@@ -65,6 +95,7 @@ export default function PracticePage() {
 
         if (isMounted) {
           setProblem(problemData)
+          problemRef.current = problemData
           setTestCases(visibleCases.filter((tc) => tc.visible ?? tc.isVisible ?? true))
           setCode(problemData.templateCode ?? problemData.starterCode ?? '')
         }
@@ -92,11 +123,26 @@ export default function PracticePage() {
       onConnect: () => {
         stompClient.subscribe(`/topic/practice/${userId}`, (message) => {
           const event = JSON.parse(message.body)
+          const currentProblem = problemRef.current
+          const runtimeMs = event.runtimeMs ?? event.runtime_ms ?? null
+          const timeLimitMs = currentProblem?.timeLimit ?? currentProblem?.time_limit ?? null
+          const type = normalizeResultStatus(
+            event.status ?? event.type,
+            event.message,
+            runtimeMs,
+            timeLimitMs,
+          )
           setResults((prev) => [
             {
               id: `${Date.now()}-${prev.length}`,
-              type: event.status ?? event.type ?? 'UPDATE',
-              message: event.message ?? '',
+              type,
+              message:
+                type === 'TIME_LIMIT_EXCEEDED'
+                  ? (event.message && !String(event.message).toLowerCase().includes('time limit')
+                      ? event.message
+                      : 'Your code exceeded the time limit.')
+                  : (event.message ?? ''),
+              runtimeMs,
             },
             ...prev,
           ])
@@ -509,6 +555,9 @@ export default function PracticePage() {
                 <article className="result-card" key={result.id}>
                   <p className="result-title" style={{ color: meta.color }}>{meta.text}</p>
                   {result.message ? <p className="result-message">{result.message}</p> : null}
+                  {result.runtimeMs != null ? (
+                    <p className="result-message">Time: {result.runtimeMs}ms</p>
+                  ) : null}
                 </article>
               )
             })

@@ -1,18 +1,25 @@
-@import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=JetBrains+Mono:wght@400;500&family=DM+Sans:wght@400;500&display=swap');
+@import "tailwindcss";
 
 :root {
-  --bg-primary: #0a0a0f;
-  --bg-surface: #12121a;
-  --bg-elevated: #1a1a2e;
-  --border: #1e1e2e;
+  --bg-primary: #07070c;
+  --bg-surface: #0e0e16;
+  --bg-elevated: #161622;
+  --bg-muted: #1c1c2a;
+  --border: #252536;
+  --border-soft: rgba(37, 37, 54, 0.7);
   --accent-cyan: #00d4ff;
+  --accent-cyan-dim: rgba(0, 212, 255, 0.12);
   --accent-green: #39ff14;
+  --accent-green-dim: rgba(57, 255, 20, 0.12);
+  --accent-amber: #ffb020;
   --accent-red: #ff4757;
-  --text-primary: #e8e8f0;
-  --text-secondary: #6b6b8a;
+  --text-primary: #ececf4;
+  --text-secondary: #8a8aa8;
+  --text-muted: #5c5c78;
   --font-display: 'Rajdhani', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
   --font-body: 'DM Sans', sans-serif;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 * {
@@ -21,13 +28,116 @@
   box-sizing: border-box;
 }
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--bg-primary);
   color: var(--text-primary);
   font-family: var(--font-body);
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: rgba(0, 212, 255, 0.28);
+  color: #fff;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
 }
 
 .app {
   min-height: 100vh;
+}
+
+.font-display {
+  font-family: var(--font-display);
+}
+
+.font-mono-zc {
+  font-family: var(--font-mono);
+}
+
+/* Atmosphere */
+.zc-grid-bg {
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(0, 212, 255, 0.14), transparent),
+    radial-gradient(ellipse 50% 40% at 100% 100%, rgba(57, 255, 20, 0.06), transparent),
+    linear-gradient(rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  background-size: auto, auto, 64px 64px, 64px 64px;
+}
+
+/* Motion */
+@keyframes zc-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes zc-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes zc-pulse-ring {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.04); }
+}
+
+@keyframes zc-draw-ring {
+  from { stroke-dashoffset: var(--ring-circ); }
+}
+
+@keyframes zc-scan {
+  0% { transform: translateX(-120%); }
+  100% { transform: translateX(220%); }
+}
+
+.zc-animate-in {
+  animation: zc-fade-up 0.7s var(--ease-out) both;
+}
+
+.zc-animate-in-delay-1 { animation-delay: 0.1s; }
+.zc-animate-in-delay-2 { animation-delay: 0.2s; }
+.zc-animate-in-delay-3 { animation-delay: 0.35s; }
+.zc-animate-in-delay-4 { animation-delay: 0.5s; }
+
+.zc-scan-line {
+  position: relative;
+  overflow: hidden;
+}
+
+.zc-scan-line::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 40%;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.18), transparent);
+  animation: zc-scan 3.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .zc-animate-in,
+  .zc-scan-line::after {
+    animation: none !important;
+  }
 }

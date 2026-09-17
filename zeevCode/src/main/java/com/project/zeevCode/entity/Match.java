@@ -15,7 +15,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
+@Entity(name = "CodingMatch")
 @Table(name = "matches")
 public class Match {
     @Id

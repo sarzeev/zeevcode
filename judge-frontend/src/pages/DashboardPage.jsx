@@ -334,14 +334,15 @@ export default function DashboardPage() {
 
       {/* SIDEBAR */}
       <aside className="sidebar">
-        <div className="sidebar-logo">ZeevCode</div>
+        <div className="sidebar-logo" style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>zeevCode</div>
         
         <div className="nav-section">
           <div className="nav-title">User View</div>
-          <a className="nav-link active">Dashboard</a>
+          <a className="nav-link" onClick={() => navigate('/')}>Home</a>
+          <a className="nav-link active">Arena</a>
           <a className="nav-link" onClick={handlePracticeMode}>Practice</a>
-          <a className="nav-link" onClick={() => alert('Matches coming soon')}>Matches</a>
-          <a className="nav-link" onClick={() => alert('Leaderboard coming soon')}>Leaderboard</a>
+          <a className="nav-link" onClick={() => navigate('/fundamentals')}>Fundamentals</a>
+          <a className="nav-link" onClick={() => navigate('/system-design')}>System Design</a>
         </div>
 
         {isAdmin && viewMode === 'ADMIN' && (

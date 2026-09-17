@@ -21,8 +21,26 @@ public class ProblemController {
     private final ProblemService problemService;
 
     @GetMapping
-    public ResponseEntity<List<ProblemResponse>> getAllProblems() {
-        List<Problem> problems = problemService.getAllProblems();
+    public ResponseEntity<List<ProblemResponse>> getAllProblems(
+            @RequestParam(required = false) String collection,
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String difficulty,
+            @RequestParam(required = false) Integer importance) {
+        
+        List<Problem> problems;
+        if (collection != null && !collection.isBlank()) {
+            problems = problemService.getProblemsByCollectionSlug(collection);
+        } else {
+            problems = problemService.getAllProblems();
+        }
+
+        // Apply filters
+        problems = problems.stream()
+                .filter(p -> category == null || category.equalsIgnoreCase(p.getCategory()))
+                .filter(p -> difficulty == null || difficulty.equalsIgnoreCase(p.getDifficulty().name()))
+                .filter(p -> importance == null || importance.equals(p.getImportance()))
+                .collect(Collectors.toList());
+
         return ResponseEntity.ok(problems.stream().map(this::mapToProblemResponse).collect(Collectors.toList()));
     }
 
@@ -46,6 +64,13 @@ public class ProblemController {
                 .description(problem.getDescription())
                 .difficulty(problem.getDifficulty().name())
                 .templateCode(problem.getTemplateCode())
+                .timeLimit(problem.getTimeLimit())
+                .memoryLimit(problem.getMemoryLimit())
+                .isActive(problem.isActive())
+                .category(problem.getCategory())
+                .sourceUrl(problem.getSourceUrl())
+                .leetcodeNumber(problem.getLeetcodeNumber())
+                .importance(problem.getImportance())
                 .build();
     }
 

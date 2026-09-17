@@ -24,6 +24,10 @@ api.interceptors.request.use(async (config) => {
 export const userApi = {
   getAll: () => api.get('/users'),
   getById: (id) => api.get(`/users/${id}`),
+  getStats: (userId) => api.get(`/users/${userId}/stats`),
+  getAdminSubjects: () => api.get('/admin/fundamentals/subjects'),
+  createAdminSubject: (data) => api.post('/admin/fundamentals/subjects', data),
+  importAdminPlaylist: (subjectId, data) => api.post(`/admin/fundamentals/subjects/${subjectId}/playlist/import`, data),
   getUserByUsername: (username) => api.get(`/users/username/${username}`),
   getMe: () => api.get('/users/me'),
   createUser: (userData) => api.post('/users', userData),
@@ -78,6 +82,38 @@ export const adminApi = {
   updateUserRole: (id, role) => api.put(`/admin/users/${id}/role?role=${role}`),
   disableUser: (id) => api.put(`/admin/users/${id}/disable`),
   enableUser: (id) => api.put(`/admin/users/${id}/enable`),
+  
+  // Seeder
+  seedNeetcode150: (dryRun = false) => api.post(`/admin/seed/neetcode150?dryRun=${dryRun}`),
+  updateProblemImportance: (id, importance) => api.put(`/admin/problems/${id}/importance`, { importance }),
+  updateProblemCategory: (id, category) => api.put(`/admin/problems/${id}/category`, { category }),
 }
 
 export default api
+
+export const fundamentalsApi = {
+  getDashboard: (userId) => api.get(`/fundamentals/dashboard${userId ? `?userId=${userId}` : ''}`),
+  getSubjects: () => api.get('/fundamentals/subjects'),
+  getSubjectDetails: (slug, userId) => api.get(`/fundamentals/subjects/${slug}${userId ? `?userId=${userId}` : ''}`),
+  markVideoComplete: (videoId, userId) => api.post(`/fundamentals/videos/${videoId}/complete`, { userId }),
+  getUserProgress: (userId) => api.get(`/fundamentals/progress/${userId}`)
+}
+
+export const dsaApi = {
+  // Problems with filters
+  getProblems: (params) => api.get('/problems', { params }),
+  getCollections: () => api.get('/collections'),
+  getCollection: (slug) => api.get(`/collections/${slug}`),
+  getCollectionProblems: (slug) => api.get(`/collections/${slug}/problems`),
+
+  // User progress
+  getMyProgress: () => api.get('/dsa/progress'),
+  getProblemProgress: (problemId) => api.get(`/dsa/progress/${problemId}`),
+  updateStatus: (problemId, status) => api.post(`/dsa/progress/${problemId}/status`, { status }),
+  updateMastery: (problemId, masteryLevel) => api.post(`/dsa/progress/${problemId}/mastery`, { masteryLevel }),
+  markRevision: (problemId, revision) => api.post(`/dsa/progress/${problemId}/revision`, { revision }),
+
+  // Dashboard
+  getDashboard: () => api.get('/dsa/dashboard'),
+  getCollectionDashboard: (slug) => api.get(`/dsa/dashboard/collection/${slug}`),
+}

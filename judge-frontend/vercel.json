@@ -1,0 +1,12 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/:path*",
+      "destination": "http://zeevcode-alb-1681395799.ap-south-1.elb.amazonaws.com/api/:path*"
+    },
+    {
+      "source": "/ws",
+      "destination": "http://zeevcode-alb-1681395799.ap-south-1.elb.amazonaws.com/ws"
+    }
+  ]
+}

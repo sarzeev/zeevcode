@@ -142,6 +142,12 @@ export default function AdminDashboardPage() {
           <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '1rem' }}>Click to view</div>
         </div>
 
+        <div className="admin-card" style={{ cursor: 'pointer' }} onClick={() => navigate('/admin/fundamentals')}>
+          <div className="card-title">Manage Fundamentals</div>
+          <div className="card-value">📚</div>
+          <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', marginTop: '1rem' }}>Click to view</div>
+        </div>
+
         <div className="admin-card">
           <div className="card-title">Matches Played</div>
           <div className="card-value">{stats?.totalMatches ?? '--'}</div>

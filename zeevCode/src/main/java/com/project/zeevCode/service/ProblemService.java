@@ -18,9 +18,19 @@ public class ProblemService {
 
     private final ProblemRepository problemRepository;
     private final TestCaseRepository testCaseRepository;
+    private final com.project.zeevCode.repository.ProblemCollectionMembershipRepository membershipRepository;
 
     public List<Problem> getAllProblems() {
         return problemRepository.findByIsActiveTrue();
+    }
+
+    public List<Problem> getProblemsByCollectionSlug(String collectionSlug) {
+        return membershipRepository.findAll().stream()
+                .filter(m -> m.getCollection().getSlug().equals(collectionSlug))
+                .sorted((a, b) -> Integer.compare(a.getOrderIndex() != null ? a.getOrderIndex() : 0, b.getOrderIndex() != null ? b.getOrderIndex() : 0))
+                .map(com.project.zeevCode.entity.ProblemCollectionMembership::getProblem)
+                .filter(Problem::isActive)
+                .toList();
     }
 
     public Problem getProblemById(UUID id) {

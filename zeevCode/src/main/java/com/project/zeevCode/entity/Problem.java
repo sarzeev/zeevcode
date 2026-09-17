@@ -51,4 +51,20 @@ public class Problem {
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @Column(length = 100)
+    private String category;
+
+    @Column(name = "source_url", length = 500)
+    private String sourceUrl;
+
+    @Column(name = "leetcode_number")
+    private Integer leetcodeNumber;
+
+    @Column(columnDefinition = "SMALLINT")
+    private Integer importance; // 1-5
+
+    @Column(name = "is_seeded", nullable = false)
+    @Builder.Default
+    private boolean isSeeded = false;
 }

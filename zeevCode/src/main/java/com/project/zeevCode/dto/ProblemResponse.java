@@ -18,4 +18,13 @@ public class ProblemResponse {
     private String description;
     private String difficulty;
     private String templateCode;
+    private Integer timeLimit;
+    private Integer memoryLimit;
+    private boolean isActive;
+    
+    // DSA Learning fields
+    private String category;
+    private String sourceUrl;
+    private Integer leetcodeNumber;
+    private Integer importance;
 }

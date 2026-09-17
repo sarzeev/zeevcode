@@ -1,18 +1,31 @@
 package com.project.zeevCode.controller;
 
 import com.project.zeevCode.dto.ProblemRequest;
+import com.project.zeevCode.dto.ProblemResponse;
+import com.project.zeevCode.dto.SeedResult;
 import com.project.zeevCode.dto.TestCaseRequest;
+import com.project.zeevCode.dto.TestCaseResponse;
 import com.project.zeevCode.entity.Problem;
 import com.project.zeevCode.entity.TestCase;
 import com.project.zeevCode.entity.User;
+import com.project.zeevCode.entity.UserRole;
 import com.project.zeevCode.repository.MatchRepository;
 import com.project.zeevCode.repository.ProblemRepository;
 import com.project.zeevCode.repository.SubmissionRepository;
 import com.project.zeevCode.repository.TestCaseRepository;
 import com.project.zeevCode.repository.UserRepository;
+import com.project.zeevCode.service.NeetCodeSeederService;
+import com.project.zeevCode.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +42,7 @@ public class AdminController {
     private final MatchRepository matchRepository;
     private final SubmissionRepository submissionRepository;
     private final com.project.zeevCode.service.UserService userService;
+    private final NeetCodeSeederService neetCodeSeederService;
 
     // --- PROBLEM MANAGEMENT ---
     @GetMapping("/problems")
@@ -96,10 +110,51 @@ public class AdminController {
     }
 
     @PutMapping("/problems/{id}/restore")
-    public ResponseEntity<?> restoreProblem(@PathVariable UUID id) {
-        Problem problem = problemRepository.findById(id).orElseThrow(() -> new RuntimeException("Problem not found"));
+    public ResponseEntity<ProblemResponse> restoreProblem(@PathVariable UUID id) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Problem not found"));
         problem.setActive(true);
-        return ResponseEntity.ok(problemRepository.save(problem));
+        Problem updated = problemRepository.save(problem);
+        return ResponseEntity.ok(mapToProblemResponse(updated));
+    }
+
+    @PutMapping("/problems/{id}/importance")
+    public ResponseEntity<ProblemResponse> updateProblemImportance(@PathVariable UUID id, @RequestBody Map<String, Integer> request) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Problem not found"));
+        problem.setImportance(request.get("importance"));
+        Problem updated = problemRepository.save(problem);
+        return ResponseEntity.ok(mapToProblemResponse(updated));
+    }
+
+    @PutMapping("/problems/{id}/category")
+    public ResponseEntity<ProblemResponse> updateProblemCategory(@PathVariable UUID id, @RequestBody Map<String, String> request) {
+        Problem problem = problemRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Problem not found"));
+        problem.setCategory(request.get("category"));
+        Problem updated = problemRepository.save(problem);
+        return ResponseEntity.ok(mapToProblemResponse(updated));
+    }
+
+    @PostMapping("/seed/neetcode150")
+    public ResponseEntity<SeedResult> seedNeetcode150(@RequestParam(defaultValue = "false") boolean dryRun) {
+        return ResponseEntity.ok(neetCodeSeederService.seedNeetCode150(dryRun));
+    }
+
+    private ProblemResponse mapToProblemResponse(Problem problem) {
+        return ProblemResponse.builder()
+                .id(problem.getId())
+                .title(problem.getTitle())
+                .slug(problem.getSlug())
+                .difficulty(problem.getDifficulty().name())
+                .description(problem.getDescription())
+                .templateCode(problem.getTemplateCode())
+                .timeLimit(problem.getTimeLimit())
+                .memoryLimit(problem.getMemoryLimit())
+                .isActive(problem.isActive())
+                .importance(problem.getImportance())
+                .category(problem.getCategory())
+                .build();
     }
 
     // --- TEST CASE MANAGEMENT ---
