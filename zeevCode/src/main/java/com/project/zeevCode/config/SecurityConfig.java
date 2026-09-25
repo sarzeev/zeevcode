@@ -27,6 +27,8 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/fundamentals/**").permitAll() // Public read for Fundamentals
+                        .requestMatchers("/api/fundamentals/webhook").permitAll() // GitHub Webhook
                         .requestMatchers("/api/users/username/**").permitAll() // Public profile viewing
                         .requestMatchers("/ws/**").permitAll() // WebSocket handshake
                         .requestMatchers("/api/submissions/**").permitAll() // Temp test
