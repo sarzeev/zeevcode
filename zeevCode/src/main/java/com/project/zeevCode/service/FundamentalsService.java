@@ -8,11 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.UUID;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -20,6 +16,12 @@ import java.util.stream.Collectors;
 @Service
 public class FundamentalsService {
 
+    // ─── New GitHub-based dependencies ──────────────────────────────────────────
+    private final FundamentalsRepoCacheRepository repoCacheRepository;
+    private final FundamentalsChapterProgressRepository chapterProgressRepository;
+    private final MarkdownRenderService markdownRenderService;
+
+    // ─── Legacy video-based dependencies (kept for AdminFundamentalsController) ─
     private final SubjectRepository subjectRepository;
     private final PlaylistRepository playlistRepository;
     private final VideoRepository videoRepository;
@@ -31,15 +33,21 @@ public class FundamentalsService {
 
     @Autowired
     public FundamentalsService(
-        SubjectRepository subjectRepository,
-        PlaylistRepository playlistRepository,
-        VideoRepository videoRepository,
-        UserVideoProgressRepository userVideoProgressRepository,
-        UserRepository userRepository,
-        YouTubeService youtubeService,
-        ResourceRepository resourceRepository,
-        QuizQuestionRepository quizQuestionRepository
+            FundamentalsRepoCacheRepository repoCacheRepository,
+            FundamentalsChapterProgressRepository chapterProgressRepository,
+            MarkdownRenderService markdownRenderService,
+            SubjectRepository subjectRepository,
+            PlaylistRepository playlistRepository,
+            VideoRepository videoRepository,
+            UserVideoProgressRepository userVideoProgressRepository,
+            UserRepository userRepository,
+            YouTubeService youtubeService,
+            ResourceRepository resourceRepository,
+            QuizQuestionRepository quizQuestionRepository
     ) {
+        this.repoCacheRepository = repoCacheRepository;
+        this.chapterProgressRepository = chapterProgressRepository;
+        this.markdownRenderService = markdownRenderService;
         this.subjectRepository = subjectRepository;
         this.playlistRepository = playlistRepository;
         this.videoRepository = videoRepository;
@@ -50,27 +58,189 @@ public class FundamentalsService {
         this.quizQuestionRepository = quizQuestionRepository;
     }
 
+    // ═══════════════════════════════════════════════════════════════════════════
+    // New GitHub-backed methods
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    /**
+     * Dashboard: list of subjects with chapter count and user progress.
+     * All data read from the repo cache — never fetches GitHub live.
+     */
+    public List<Map<String, Object>> getDashboard(UUID userId) {
+        List<Object[]> distinctSubjects = repoCacheRepository.findDistinctSubjects();
+        List<Map<String, Object>> result = new ArrayList<>();
+
+        for (Object[] row : distinctSubjects) {
+            String subjectSlug = (String) row[0];
+            String subjectName = (String) row[1];
+
+            long totalChapters = repoCacheRepository.countBySubjectSlug(subjectSlug);
+            long completedChapters = 0;
+
+            if (userId != null) {
+                completedChapters = chapterProgressRepository
+                        .countByUserIdAndSubjectSlugAndCompleted(userId, subjectSlug, true);
+            }
+
+            Map<String, Object> entry = new LinkedHashMap<>();
+            entry.put("subjectSlug", subjectSlug);
+            entry.put("subjectName", subjectName);
+            entry.put("totalChapters", totalChapters);
+            entry.put("completedChapters", completedChapters);
+            result.add(entry);
+        }
+
+        return result;
+    }
+
+    /**
+     * Subject detail: chapter list with per-chapter completion status.
+     */
+    public Map<String, Object> getSubjectDetails(String subjectSlug, UUID userId) {
+        List<FundamentalsRepoCache> chapters = repoCacheRepository
+                .findBySubjectSlugOrderByChapterOrderAsc(subjectSlug);
+
+        if (chapters.isEmpty()) {
+            throw new NoSuchElementException("Subject not found or no chapters cached: " + subjectSlug);
+        }
+
+        String subjectName = chapters.get(0).getSubjectName();
+
+        List<String> completedPaths = new ArrayList<>();
+        if (userId != null) {
+            completedPaths = chapterProgressRepository.findByUserIdAndSubjectSlug(userId, subjectSlug)
+                    .stream()
+                    .filter(FundamentalsChapterProgress::isCompleted)
+                    .map(FundamentalsChapterProgress::getChapterPath)
+                    .collect(Collectors.toList());
+        }
+        final Set<String> completedSet = new HashSet<>(completedPaths);
+
+        List<Map<String, Object>> chapterList = new ArrayList<>();
+        for (FundamentalsRepoCache chapter : chapters) {
+            Map<String, Object> c = new LinkedHashMap<>();
+            c.put("path", chapter.getChapterPath());
+            c.put("name", chapter.getChapterName());
+            c.put("order", chapter.getChapterOrder());
+            c.put("blobSha", chapter.getBlobSha());
+            c.put("completed", completedSet.contains(chapter.getChapterPath()));
+            chapterList.add(c);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("subjectSlug", subjectSlug);
+        result.put("subjectName", subjectName);
+        result.put("chapters", chapterList);
+        result.put("totalChapters", chapters.size());
+        result.put("completedChapters", completedSet.size());
+        return result;
+    }
+
+    /**
+     * Chapter content: returns rendered HTML. Renders and caches on cache miss.
+     */
+    public String getChapterContent(String subjectSlug, String chapterPath) {
+        Optional<FundamentalsRepoCache> cacheEntry = repoCacheRepository
+                .findBySubjectSlugAndChapterPath(subjectSlug, chapterPath);
+        if (cacheEntry.isEmpty()) {
+            throw new NoSuchElementException("Chapter not found in cache: " + chapterPath);
+        }
+        return markdownRenderService.getRenderedHtml(cacheEntry.get());
+    }
+
+    /**
+     * Mark a chapter as completed for a user.
+     */
+    @Transactional
+    public void markChapterCompleted(UUID userId, String subjectSlug, String chapterPath) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+        Optional<FundamentalsChapterProgress> existing = chapterProgressRepository
+                .findByUserIdAndChapterPath(userId, chapterPath);
+
+        if (existing.isPresent()) {
+            FundamentalsChapterProgress progress = existing.get();
+            if (!progress.isCompleted()) {
+                progress.setCompleted(true);
+                progress.setCompletedAt(LocalDateTime.now());
+                chapterProgressRepository.save(progress);
+            }
+        } else {
+            FundamentalsChapterProgress progress = FundamentalsChapterProgress.builder()
+                    .user(user)
+                    .subjectSlug(subjectSlug)
+                    .chapterPath(chapterPath)
+                    .completed(true)
+                    .completedAt(LocalDateTime.now())
+                    .build();
+            chapterProgressRepository.save(progress);
+        }
+    }
+
+    /**
+     * Overall progress: per-subject percentages and average across all subjects.
+     * Overall % = average of individual subject percentages (not weighted by chapter count).
+     */
+    public Map<String, Object> getOverallProgress(UUID userId) {
+        List<Object[]> distinctSubjects = repoCacheRepository.findDistinctSubjects();
+        List<Map<String, Object>> subjects = new ArrayList<>();
+        int totalPercent = 0;
+
+        for (Object[] row : distinctSubjects) {
+            String slug = (String) row[0];
+            String name = (String) row[1];
+            long total = repoCacheRepository.countBySubjectSlug(slug);
+            long completed = userId != null
+                    ? chapterProgressRepository.countByUserIdAndSubjectSlugAndCompleted(userId, slug, true)
+                    : 0;
+
+            int percent = total > 0 ? (int) Math.round((completed * 100.0) / total) : 0;
+            totalPercent += percent;
+
+            Map<String, Object> s = new LinkedHashMap<>();
+            s.put("subjectSlug", slug);
+            s.put("subjectName", name);
+            s.put("totalChapters", total);
+            s.put("completedChapters", completed);
+            s.put("progressPercent", percent);
+            subjects.add(s);
+        }
+
+        int overallPercent = distinctSubjects.isEmpty() ? 0
+                : (int) Math.round((double) totalPercent / distinctSubjects.size());
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("subjects", subjects);
+        result.put("overallPercent", overallPercent);
+        return result;
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
+    // Legacy methods — kept for AdminFundamentalsController compatibility
+    // ═══════════════════════════════════════════════════════════════════════════
+
     public List<Subject> getAllSubjects() {
         return subjectRepository.findAll();
     }
-    
+
     public Subject getSubjectBySlug(String slug) {
         return subjectRepository.findBySlug(slug)
                 .orElseThrow(() -> new IllegalArgumentException("Subject not found: " + slug));
     }
-    
+
     public List<Playlist> getPlaylistsBySubject(UUID subjectId) {
         return playlistRepository.findBySubjectId(subjectId);
     }
-    
+
     public List<Video> getVideosByPlaylist(UUID playlistId) {
         return videoRepository.findByPlaylistIdOrderByOrderNumberAsc(playlistId);
     }
-    
+
     public List<Resource> getResourcesBySubject(UUID subjectId) {
         return resourceRepository.findBySubjectId(subjectId);
     }
-    
+
     public List<QuizQuestion> getQuizBySubject(UUID subjectId) {
         return quizQuestionRepository.findBySubjectId(subjectId);
     }
@@ -105,8 +275,7 @@ public class FundamentalsService {
         });
 
         List<YouTubePlaylistItemDto> items = youtubeService.getPlaylistItems(playlistId);
-        
-        // Filter out private and deleted videos
+
         List<YouTubePlaylistItemDto> validItems = new ArrayList<>();
         for (YouTubePlaylistItemDto item : items) {
             String title = item.getSnippet().getTitle();
@@ -115,7 +284,6 @@ public class FundamentalsService {
             }
         }
 
-        // Get durations in batches of 50
         List<String> videoIds = validItems.stream()
                 .map(item -> item.getSnippet().getResourceId().getVideoId())
                 .collect(Collectors.toList());
@@ -168,7 +336,7 @@ public class FundamentalsService {
                 .orElseThrow(() -> new IllegalArgumentException("Video not found"));
 
         Optional<UserVideoProgress> progressOpt = userVideoProgressRepository.findByUserIdAndVideoId(userId, videoId);
-        
+
         if (progressOpt.isPresent()) {
             UserVideoProgress progress = progressOpt.get();
             if (!progress.isCompleted()) {
@@ -186,11 +354,11 @@ public class FundamentalsService {
             userVideoProgressRepository.save(progress);
         }
     }
-    
+
     public List<UserVideoProgress> getUserProgressForSubject(UUID userId, UUID subjectId) {
         return userVideoProgressRepository.findByUserIdAndVideoPlaylistSubjectId(userId, subjectId);
     }
-    
+
     public List<UserVideoProgress> getAllUserProgress(UUID userId) {
         return userVideoProgressRepository.findByUserId(userId);
     }

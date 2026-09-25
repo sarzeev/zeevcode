@@ -92,11 +92,26 @@ export const adminApi = {
 export default api
 
 export const fundamentalsApi = {
+  // Dashboard: subject cards with chapter count and progress
   getDashboard: (userId) => api.get(`/fundamentals/dashboard${userId ? `?userId=${userId}` : ''}`),
-  getSubjects: () => api.get('/fundamentals/subjects'),
-  getSubjectDetails: (slug, userId) => api.get(`/fundamentals/subjects/${slug}${userId ? `?userId=${userId}` : ''}`),
-  markVideoComplete: (videoId, userId) => api.post(`/fundamentals/videos/${videoId}/complete`, { userId }),
-  getUserProgress: (userId) => api.get(`/fundamentals/progress/${userId}`)
+
+  // Subject detail: chapter list with completion status
+  getSubjectDetails: (slug, userId) =>
+    api.get(`/fundamentals/subjects/${slug}${userId ? `?userId=${userId}` : ''}`),
+
+  // Chapter HTML content
+  getChapterContent: (subjectSlug, chapterPath) =>
+    api.get('/fundamentals/chapter-content', { params: { subjectSlug, chapterPath } }),
+
+  // Mark chapter complete
+  markChapterComplete: (userId, subjectSlug, chapterPath) =>
+    api.post('/fundamentals/chapters/complete', { userId, subjectSlug, chapterPath }),
+
+  // Overall progress
+  getProgress: (userId) => api.get(`/fundamentals/progress${userId ? `?userId=${userId}` : ''}`),
+
+  // Admin
+  triggerSync: () => api.post('/fundamentals/admin/sync'),
 }
 
 export const dsaApi = {

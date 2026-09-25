@@ -29,6 +29,7 @@ import AdminTestCasesPage from './pages/AdminTestCasesPage'
 import AdminUsersPage from './pages/AdminUsersPage'
 import AdminFundamentalsPage from './pages/AdminFundamentalsPage'
 import SubjectLearningPage from './pages/SubjectLearningPage'
+import ChapterPage from './pages/ChapterPage'
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
             <Route path="/" element={<HomeLandingPage />} />
             <Route path="/fundamentals" element={<FundamentalsPage />} />
             <Route path="/fundamentals/:subjectSlug" element={<SubjectLearningPage />} />
+            <Route path="/fundamentals/:subjectSlug/chapter" element={<ChapterPage />} />
             <Route path="/system-design" element={<SystemDesignPage />} />
             <Route path="/resources" element={<ResourcesPage />} />
             <Route path="/stories" element={<StoriesPage />} />
