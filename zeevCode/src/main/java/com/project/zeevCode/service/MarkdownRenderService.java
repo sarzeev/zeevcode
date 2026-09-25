@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class MarkdownRenderService {
 
     private static final Logger log = LoggerFactory.getLogger(MarkdownRenderService.class);
-    private static final String REPO_OWNER = "manishkumar8312";
+    private static final String REPO_OWNER = "sarzeev";
     private static final String REPO_NAME = "CS-Fundamentals";
     private static final String RAW_BASE = "https://raw.githubusercontent.com/" + REPO_OWNER + "/" + REPO_NAME + "/main/";
 
