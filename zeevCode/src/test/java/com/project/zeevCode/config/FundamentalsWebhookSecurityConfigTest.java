@@ -1,23 +1,26 @@
 package com.project.zeevCode.config;
 
 import com.project.zeevCode.controller.FundamentalsController;
+import com.project.zeevCode.config.SecurityConfig;
 import com.project.zeevCode.service.FundamentalsService;
 import com.project.zeevCode.service.GitHubRepoSyncService;
-import com.project.zeevCode.service.UserService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.web.cors.CorsConfigurationSource;
 
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -26,6 +29,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @WebMvcTest(FundamentalsController.class)
 @TestPropertySource(properties = "github.webhook.secret=test-secret")
+@Import(SecurityConfig.class)
 class FundamentalsWebhookSecurityConfigTest {
 
     @Autowired
@@ -38,13 +42,19 @@ class FundamentalsWebhookSecurityConfigTest {
     private GitHubRepoSyncService gitHubRepoSyncService;
 
     @MockBean
-    private CorsConfigurationSource corsConfigurationSource;
-
-    @MockBean
-    private UserService userService;
+    private FirebaseAutoProvisioningFilter firebaseAutoProvisioningFilter;
 
     @MockBean
     private JwtDecoder jwtDecoder;
+
+    @BeforeEach
+    void setupFilterPassThrough() throws Exception {
+        doAnswer(invocation -> {
+            jakarta.servlet.FilterChain chain = invocation.getArgument(2);
+            chain.doFilter(invocation.getArgument(0), invocation.getArgument(1));
+            return null;
+        }).when(firebaseAutoProvisioningFilter).doFilter(any(), any(), any());
+    }
 
     @Test
     void webhookIsAccessibleWithoutJwt() throws Exception {

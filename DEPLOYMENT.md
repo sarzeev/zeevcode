@@ -161,8 +161,8 @@ Set the same environment variables from `zeevCode/.env.example` in AWS. Do not u
 
 - Current `judge-frontend/vercel.json` proxies `/api/*` to `http://zeevcode-alb-1681395799.ap-south-1.elb.amazonaws.com/api/:path*`.
 - Current ALB listener documented here is HTTP on port 80 only.
-- Because GitHub webhooks require a final HTTPS payload URL and HMAC must be validated on the exact request body, Fundamentals webhook delivery should bypass Vercel and target a direct HTTPS AWS endpoint for `/api/fundamentals/webhook`.
-- Remaining infrastructure gap: no HTTPS AWS webhook endpoint is documented in this repository today.
+- Current intended webhook path is GitHub → `https://zeevcode.vercel.app/api/fundamentals/webhook` → Vercel rewrite → HTTP ALB backend endpoint `/api/fundamentals/webhook`.
+- Keep this reverse-proxy architecture in place when configuring repository webhooks.
 
 ### AWS Resources Created
 

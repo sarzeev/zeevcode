@@ -2,12 +2,14 @@ package com.project.zeevCode.controller;
 
 import com.project.zeevCode.service.FundamentalsService;
 import com.project.zeevCode.service.GitHubRepoSyncService;
+import com.project.zeevCode.service.UserService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +36,12 @@ class FundamentalsControllerWebhookTest {
 
     @MockBean
     private GitHubRepoSyncService gitHubRepoSyncService;
+
+    @MockBean
+    private UserService userService;
+
+    @MockBean
+    private JwtDecoder jwtDecoder;
 
     @Test
     void missingSignatureReturns401() throws Exception {
