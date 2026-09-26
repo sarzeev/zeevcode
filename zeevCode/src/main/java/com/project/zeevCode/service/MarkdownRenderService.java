@@ -29,7 +29,7 @@ import java.util.regex.Pattern;
 public class MarkdownRenderService {
 
     private static final Logger log = LoggerFactory.getLogger(MarkdownRenderService.class);
-    private static final String REPO_OWNER = "sarzeev";
+    private static final String REPO_OWNER = "23se02cs102";
     private static final String REPO_NAME = "CS-Fundamentals";
     private static final String RAW_BASE = "https://raw.githubusercontent.com/" + REPO_OWNER + "/" + REPO_NAME + "/main/";
 
@@ -147,5 +147,9 @@ public class MarkdownRenderService {
         // Rewrite relative .md href links — currently just strip .md extension
         // Links to other chapters within the same subject stay relative for now
         return html.replaceAll("href=\"([^\"]+)\\.md\"", "href=\"$1\"");
+    }
+
+    String getConfiguredRepositoryFullName() {
+        return REPO_OWNER + "/" + REPO_NAME;
     }
 }

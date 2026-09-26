@@ -26,7 +26,7 @@ import java.util.stream.Collectors;
 public class GitHubRepoSyncService {
 
     private static final Logger log = LoggerFactory.getLogger(GitHubRepoSyncService.class);
-    private static final String REPO_OWNER = "sarzeev";
+    private static final String REPO_OWNER = "23se02cs102";
     private static final String REPO_NAME = "CS-Fundamentals";
     private static final String GITHUB_API_BASE = "https://api.github.com";
     private static final Set<String> SKIP_PATHS = Set.of(
@@ -243,5 +243,9 @@ public class GitHubRepoSyncService {
             builder.header("Authorization", "Bearer " + githubPat);
         }
         return builder.build();
+    }
+
+    String getConfiguredRepositoryFullName() {
+        return REPO_OWNER + "/" + REPO_NAME;
     }
 }

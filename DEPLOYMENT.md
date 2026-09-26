@@ -157,6 +157,13 @@ Set the same environment variables from `zeevCode/.env.example` in AWS. Do not u
 - Firebase Admin SDK initialized successfully
 - Flyway migrations validated successfully
 
+### Webhook Endpoint Determination (GitHub Fundamentals Sync)
+
+- Current `judge-frontend/vercel.json` proxies `/api/*` to `http://zeevcode-alb-1681395799.ap-south-1.elb.amazonaws.com/api/:path*`.
+- Current ALB listener documented here is HTTP on port 80 only.
+- Because GitHub webhooks require a final HTTPS payload URL and HMAC must be validated on the exact request body, Fundamentals webhook delivery should bypass Vercel and target a direct HTTPS AWS endpoint for `/api/fundamentals/webhook`.
+- Remaining infrastructure gap: no HTTPS AWS webhook endpoint is documented in this repository today.
+
 ### AWS Resources Created
 
 | Resource | Name/ID | ARN/Details |

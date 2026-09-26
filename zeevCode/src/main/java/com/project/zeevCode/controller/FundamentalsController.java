@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
@@ -92,13 +93,11 @@ public class FundamentalsController {
     public ResponseEntity<String> handleWebhook(
             @RequestHeader(value = "X-Hub-Signature-256", required = false) String signature,
             @RequestHeader(value = "X-GitHub-Event", required = false) String event,
-            @RequestBody String payload) {
+            @RequestBody byte[] payload) {
 
-        if (webhookSecret != null && !webhookSecret.isBlank()) {
-            if (!verifyWebhookSignature(payload, signature)) {
-                log.warn("Invalid webhook signature received");
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid signature");
-            }
+        if (!verifyWebhookSignature(payload, signature)) {
+            log.warn("Invalid webhook signature received");
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid signature");
         }
 
         if ("push".equals(event)) {
@@ -128,27 +127,34 @@ public class FundamentalsController {
         return ResponseEntity.ok(Map.of("message", "Sync started in background"));
     }
 
-    private boolean verifyWebhookSignature(String payload, String signature) {
+    private boolean verifyWebhookSignature(byte[] payload, String signature) {
+        if (webhookSecret == null || webhookSecret.isBlank()) return false;
         if (signature == null || !signature.startsWith("sha256=")) return false;
         try {
+            byte[] actual = hexToBytes(signature.substring("sha256=".length()));
+            if (actual == null) return false;
+
             Mac mac = Mac.getInstance("HmacSHA256");
             SecretKeySpec key = new SecretKeySpec(
                     webhookSecret.getBytes(StandardCharsets.UTF_8), "HmacSHA256");
             mac.init(key);
-            byte[] hmac = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
-            String expected = "sha256=" + bytesToHex(hmac);
-            return expected.equals(signature);
+            byte[] expected = mac.doFinal(payload);
+            return MessageDigest.isEqual(expected, actual);
         } catch (Exception e) {
             log.error("Error verifying webhook signature: {}", e.getMessage());
             return false;
         }
     }
 
-    private String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02x", b));
+    private byte[] hexToBytes(String hex) {
+        if (hex == null || (hex.length() % 2) != 0) return null;
+        byte[] bytes = new byte[hex.length() / 2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            int hi = Character.digit(hex.charAt(i), 16);
+            int lo = Character.digit(hex.charAt(i + 1), 16);
+            if (hi < 0 || lo < 0) return null;
+            bytes[i / 2] = (byte) ((hi << 4) + lo);
         }
-        return sb.toString();
+        return bytes;
     }
 }

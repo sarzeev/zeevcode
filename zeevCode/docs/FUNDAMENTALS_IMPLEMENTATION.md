@@ -7,7 +7,7 @@
 ## Architecture
 
 ```
-CS-Fundamentals GitHub Repository (manishkumar8312/CS-Fundamentals)
+CS-Fundamentals GitHub Repository (23se02cs102/CS-Fundamentals)
         ↓
 Background sync (GitHub webhook + TTL fallback every 4 hours)
         ↓
@@ -102,7 +102,7 @@ CREATE TABLE fundamentals_chapter_progress (
 ## Backend Changes
 
 ### New Service: `GitHubRepoSyncService`
-- Fetches the repo tree via `GET /repos/manishkumar8312/CS-Fundamentals/git/trees/{sha}?recursive=1`
+- Fetches the repo tree via `GET /repos/23se02cs102/CS-Fundamentals/git/trees/{sha}?recursive=1`
 - Uses authenticated GitHub client (PAT from `GITHUB_PAT` env var)
 - Parses tree into subjects (top-level dirs) and chapters (`.md` files)
 - Upserts `fundamentals_repo_cache` records
