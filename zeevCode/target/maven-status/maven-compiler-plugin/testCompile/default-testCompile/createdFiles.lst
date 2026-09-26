@@ -1,0 +1,4 @@
+com/project/zeevCode/ZeevCodeApplicationTests.class
+com/project/zeevCode/controller/FundamentalsControllerWebhookTest.class
+com/project/zeevCode/config/FundamentalsWebhookSecurityConfigTest.class
+com/project/zeevCode/service/FundamentalsRepositoryConfigurationTest.class
