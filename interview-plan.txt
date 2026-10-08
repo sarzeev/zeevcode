@@ -1,0 +1,605 @@
+Implement the **Interview Prep paid feature in ZeevCode end-to-end**.
+
+## GOAL
+
+The existing ZeevCode home page has an **Interview Prep** card.
+
+When clicked:
+
+* If the user has already purchased Interview Prep → open the Interview Prep content.
+* If authenticated but not purchased → open a premium sales/payment page.
+* If unauthenticated → use the existing ZeevCode authentication flow first.
+
+Product:
+
+**Interview Prep — ₹99 one-time payment — lifetime access**
+
+Use the existing ZeevCode design system and dark/hacker aesthetic.
+
+---
+
+## 1. FIRST: INSPECT EXISTING CODE
+
+Before writing code, inspect:
+
+* existing authentication/user model
+* existing frontend routing
+* existing API/Axios client
+* existing database/entity patterns
+* existing Flyway migrations
+* existing Interview Prep components/content, if any
+* existing payment-related code, if any
+* existing environment/configuration conventions
+* existing deployment architecture
+
+Reuse existing abstractions. Do not create duplicate authentication, user, API, or database infrastructure.
+
+Do not modify unrelated modules.
+
+---
+
+# 2. FRONTEND USER FLOW
+
+### Home
+
+Existing:
+
+`Interview Prep` card
+
+Change only its behavior so it opens:
+
+`/interview-prep`
+
+### `/interview-prep`
+
+For an authenticated user:
+
+1. Check Interview Prep entitlement from backend.
+2. If entitled → open paid content.
+3. If not entitled → show premium purchase page.
+
+For unauthenticated users:
+
+* use the existing login/auth flow.
+
+Do not trust frontend state for access control.
+
+---
+
+# 3. PREMIUM PAGE
+
+Create a polished ZeevCode-style premium landing page.
+
+Headline:
+
+**Interview Prep**
+
+Suggested positioning:
+
+**Everything you need to prepare for SDE interviews.**
+
+Show the actual features/content available in the repository.
+
+Possible sections, only if the corresponding content actually exists or is being implemented:
+
+* DSA interview preparation
+* Core CS / OS / DBMS / CN / OOP
+* Java interview questions
+* Spring Boot/backend questions
+* System Design
+* HR/behavioral questions
+* Resume/interview guidance
+* Mock interview preparation
+* Company preparation
+* Interview checklists/progress
+
+Do NOT advertise content that does not exist.
+
+Pricing:
+
+**₹99**
+
+**One-time payment · Lifetime access**
+
+CTA:
+
+**Unlock Interview Prep — ₹99**
+
+Include appropriate loading/error/payment states.
+
+---
+
+# 4. PAYMENT PROVIDER
+
+Use **Razorpay Checkout + Razorpay Orders API**.
+
+Payment amount MUST be controlled by the backend.
+
+Price:
+
+```text
+₹99 = 9900 paise
+```
+
+The frontend must never be allowed to choose the amount.
+
+Backend flow:
+
+```text
+Frontend
+   ↓
+POST create order
+   ↓
+Backend creates Razorpay order for ₹99
+   ↓
+Frontend opens Razorpay Checkout
+   ↓
+Razorpay payment
+   ↓
+Frontend sends payment details to backend
+   ↓
+Backend verifies Razorpay signature
+   ↓
+Backend verifies order/payment details
+   ↓
+Create Interview Prep entitlement
+   ↓
+Return success
+```
+
+Never grant access merely because the frontend reports success.
+
+---
+
+# 5. RAZORPAY CONFIGURATION
+
+Use backend-only environment variables:
+
+```text
+RAZORPAY_KEY_ID
+RAZORPAY_KEY_SECRET
+```
+
+If webhook verification is implemented, use a separate backend-only webhook secret according to the existing configuration convention.
+
+Rules:
+
+* never hardcode credentials
+* never commit credentials
+* never expose `RAZORPAY_KEY_SECRET`
+* never expose webhook secrets
+* public Razorpay Key ID may be sent to the browser when required by Checkout
+* use existing deployment secret management such as SSM/environment configuration
+
+If credentials are unavailable, implement everything else and clearly identify the exact environment variables required. Do not put placeholder secrets into source code.
+
+---
+
+# 6. DATABASE
+
+Use the existing PostgreSQL/Supabase + Flyway architecture.
+
+First inspect existing models to avoid duplication.
+
+Create new Flyway migration(s) for payment/entitlement data.
+
+### Payment/order record
+
+Store at minimum:
+
+* internal ID
+* user ID
+* Razorpay order ID
+* Razorpay payment ID
+* amount
+* currency
+* status
+* created timestamp
+* verified timestamp
+* failure information if appropriate
+
+### Entitlement
+
+Store at minimum:
+
+* user ID
+* product key
+* status
+* granted timestamp
+
+Product key:
+
+```text
+INTERVIEW_PREP
+```
+
+Enforce uniqueness:
+
+```text
+user + product
+```
+
+A successful verified payment permanently grants the entitlement.
+
+Do not grant access from a client-side payment ID.
+
+---
+
+# 7. BACKEND API
+
+Follow existing ZeevCode controller/service conventions.
+
+Use equivalent endpoints if a payment architecture already exists.
+
+Suggested:
+
+```text
+POST /api/payments/interview-prep/order
+POST /api/payments/interview-prep/verify
+GET  /api/payments/interview-prep/status
+```
+
+### Order endpoint
+
+Requirements:
+
+* authenticated user required
+* server creates ₹99 Razorpay order
+* persist order before/around Razorpay creation according to safe transaction handling
+* return only necessary checkout data
+* never accept arbitrary amount from frontend
+
+### Verify endpoint
+
+Accept the Razorpay checkout response fields.
+
+Server must:
+
+* validate authenticated user
+* validate the order belongs to that user
+* validate expected amount/currency
+* verify Razorpay payment signature using the secret
+* ensure payment/order state is valid
+* mark payment verified
+* create entitlement transactionally/idempotently
+* return success only after backend verification
+
+### Status endpoint
+
+Return whether the authenticated user owns:
+
+```text
+INTERVIEW_PREP
+```
+
+---
+
+# 8. PAYMENT WEBHOOK
+
+Implement Razorpay webhook handling if required/appropriate for reliable production payment confirmation.
+
+Endpoint should:
+
+* be publicly reachable
+* verify Razorpay webhook signature
+* process only supported payment events
+* be idempotent
+* never expose secrets
+* never create duplicate payments/entitlements
+
+If webhook confirmation and Checkout verification can both process the same payment, design the database/service logic so both paths are safely idempotent.
+
+Do not depend exclusively on the frontend callback for permanent access.
+
+---
+
+# 9. ACCESS CONTROL
+
+Create a backend entitlement check, for example:
+
+```text
+hasInterviewPrepAccess(userId)
+```
+
+Every paid Interview Prep API/content endpoint must enforce it server-side.
+
+Unpaid users must not gain access by:
+
+* changing URLs
+* manipulating React state
+* editing localStorage
+* changing cookies
+* calling APIs directly
+* supplying fake payment IDs
+* modifying frontend JavaScript
+
+Frontend hiding/redirecting is NOT the security boundary.
+
+Backend entitlement verification is the security boundary.
+
+---
+
+# 10. INTERVIEW PREP CONTENT
+
+Inspect the existing repository for Interview Prep content.
+
+If content already exists:
+
+* reuse it
+* protect it behind the entitlement
+* preserve the existing architecture/design
+
+If it does not exist:
+
+* build the premium shell and appropriate content structure
+* do not fabricate a massive fake question bank
+* clearly separate placeholder/content areas from actual content
+
+Suggested protected route:
+
+```text
+/interview-prep/content
+```
+
+Use the existing routing conventions.
+
+---
+
+# 11. PAYMENT STATES
+
+Handle all important states cleanly:
+
+* checking entitlement
+* creating order
+* opening Checkout
+* payment cancelled
+* payment failed
+* payment successful but verification pending
+* signature verification failure
+* backend/network failure
+* Razorpay unavailable
+* duplicate order
+* duplicate callback
+* already purchased
+* entitlement already exists
+
+Never display:
+
+**Payment successful**
+
+until the backend confirms it.
+
+After successful backend verification:
+
+```text
+payment verified
+→ entitlement created
+→ Interview Prep unlocked
+```
+
+---
+
+# 12. IDEMPOTENCY
+
+This is mandatory.
+
+Repeated:
+
+* frontend verification
+* Razorpay webhook
+* payment callback
+* network retry
+
+must NOT create:
+
+* duplicate payment records
+* duplicate entitlements
+* duplicate access
+
+Use database constraints and transactional service logic where appropriate.
+
+---
+
+# 13. SECURITY
+
+Never expose or commit:
+
+* Razorpay secret
+* Razorpay webhook secret
+* GitHub tokens
+* GitHub webhook secrets
+* AWS credentials
+* database passwords
+
+Do not log secrets.
+
+Do not put backend secrets in Vite/frontend environment variables.
+
+Do not weaken existing Spring Security rules.
+
+Do not modify the existing Fundamentals webhook/security system.
+
+---
+
+# 14. FRONTEND
+
+Use the existing ZeevCode UI components and styling.
+
+Do not redesign the whole application.
+
+Implement:
+
+```text
+Home
+ ↓
+Interview Prep
+ ↓
+Premium page
+ ↓
+₹99 Checkout
+ ↓
+Verification
+ ↓
+Interview Prep content
+```
+
+Paid users should not repeatedly see the payment page.
+
+On refresh/login, entitlement must be recovered from the backend.
+
+---
+
+# 15. TESTING
+
+Add backend tests for:
+
+* unauthenticated order request rejected
+* order amount is always ₹99
+* frontend cannot override amount
+* correct Razorpay order creation
+* valid signature accepted
+* invalid signature rejected
+* wrong order/user rejected
+* wrong amount rejected
+* failed payment does not unlock content
+* successful payment creates entitlement
+* duplicate verification is safe
+* duplicate webhook is safe
+* already-entitled user remains entitled
+* unpaid user cannot access protected Interview Prep API
+* paid user can access protected Interview Prep API
+
+Frontend tests/build should verify:
+
+* Interview Prep card navigation
+* premium page
+* entitlement check
+* Razorpay checkout launch
+* cancellation handling
+* failure handling
+* verification handling
+* successful unlock
+* already-paid flow
+
+---
+
+# 16. DATABASE / MIGRATION SAFETY
+
+Use Flyway.
+
+Do NOT edit old migrations.
+
+Create new migration(s).
+
+Follow the project's existing naming conventions.
+
+Migration must work against the existing production database.
+
+---
+
+# 17. DEPLOYMENT
+
+Preserve the existing ZeevCode architecture:
+
+```text
+Vercel frontend
+        ↓
+AWS backend
+        ↓
+PostgreSQL/Supabase
+```
+
+Do not redesign AWS.
+
+After implementation:
+
+1. backend compile/package
+2. backend tests
+3. frontend build
+4. database migration verification
+5. deploy backend
+6. configure Razorpay production/test environment variables
+7. deploy frontend
+8. verify production flow
+
+Use the project's existing deployment/secret-management process.
+
+---
+
+# 18. PRODUCTION PAYMENT TEST
+
+Before claiming completion, verify the complete flow in the configured Razorpay environment.
+
+Test:
+
+```text
+Unauthenticated
+→ login
+
+Authenticated unpaid
+→ Interview Prep
+→ ₹99 page
+→ Razorpay Checkout
+→ payment
+→ backend verification
+→ entitlement
+→ content unlocked
+```
+
+Then refresh/re-login and confirm the same account remains unlocked.
+
+Also test that another unpaid account cannot access the protected content/API.
+
+Do not claim a real payment is successful unless it was actually verified by the backend.
+
+---
+
+# 19. DO NOT TOUCH
+
+Do not modify unless strictly required:
+
+* Fundamentals
+* DSA
+* System Design
+* Resources
+* Stories
+* existing authentication
+* existing user accounts
+* existing progress systems
+* existing AWS architecture
+* existing GitHub webhook
+* unrelated database tables
+* unrelated frontend pages
+
+---
+
+# 20. FINAL ACCEPTANCE CRITERIA
+
+The task is COMPLETE only if all are true:
+
+* [ ] Interview Prep card opens `/interview-prep`
+* [ ] Unauthenticated users follow existing login flow
+* [ ] Unpaid users see premium page
+* [ ] Price is exactly ₹99
+* [ ] Payment is one-time
+* [ ] Backend controls the amount
+* [ ] Razorpay Order is created server-side
+* [ ] Razorpay Checkout works
+* [ ] Backend verifies payment signature
+* [ ] Backend verifies order/user/amount
+* [ ] Successful payment creates `INTERVIEW_PREP` entitlement
+* [ ] Entitlement is permanent
+* [ ] Entitlement is unique per user/product
+* [ ] Duplicate callbacks are idempotent
+* [ ] Razorpay webhook is securely verified if implemented
+* [ ] Unpaid users cannot access protected Interview Prep APIs
+* [ ] Paid users can access content
+* [ ] Refresh/re-login preserves access
+* [ ] Secrets are not committed or exposed
+* [ ] Flyway migration succeeds
+* [ ] Backend tests pass
+* [ ] Frontend build passes
+* [ ] Production configuration is correct
+* [ ] Existing ZeevCode functionality remains intact
+
+IMPORTANT: Do not stop at analysis or provide only instructions. Inspect the existing code, implement the feature, test it, and deploy it if deployment access is available. If something genuinely requires user input, stop only at that exact point and state the specific credential/configuration/action required. Never ask the user to paste secret values into chat or source code.

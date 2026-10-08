@@ -38,6 +38,12 @@ export const statsApi = {
   getPlatformStats: () => api.get('/stats/platform'),
 }
 
+export const paymentApi = {
+  getStatus: () => api.get('/payments/interview-prep/status'),
+  createOrder: () => api.post('/payments/interview-prep/order'),
+  verify: (data) => api.post('/payments/interview-prep/verify', data),
+}
+
 export const problemApi = {
   getAll: () => api.get('/problems'),
   getBySlug: (slug) => api.get(`/problems/${slug}`),

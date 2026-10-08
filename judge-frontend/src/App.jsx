@@ -6,6 +6,7 @@ import RegisterPage from './pages/RegisterPage'
 
 // New Landing & Learning Pages
 import HomeLandingPage from './pages/HomeLandingPage'
+import InterviewPrepPage from './pages/InterviewPrepPage'
 import FundamentalsPage from './pages/FundamentalsPage'
 import SystemDesignPage from './pages/SystemDesignPage'
 import ResourcesPage from './pages/ResourcesPage'
@@ -42,6 +43,7 @@ function App() {
           <Route element={<ProtectedRoute />}>
             {/* New Routes */}
             <Route path="/" element={<HomeLandingPage />} />
+            <Route path="/interview-prep" element={<InterviewPrepPage />} />
             <Route path="/fundamentals" element={<FundamentalsPage />} />
             <Route path="/fundamentals/:subjectSlug" element={<SubjectLearningPage />} />
             <Route path="/fundamentals/:subjectSlug/chapter" element={<ChapterPage />} />

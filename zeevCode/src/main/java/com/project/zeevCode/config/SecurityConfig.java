@@ -28,6 +28,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/health").permitAll()
                         .requestMatchers("/api/fundamentals/webhook").permitAll() // GitHub Webhook
+                        .requestMatchers("/api/payments/webhook").permitAll() // Razorpay Webhook
                         .requestMatchers("/api/fundamentals/admin/**").hasRole("ADMIN") // Admin fundamentals routes
                         .requestMatchers("/api/users/username/**").permitAll() // Public profile viewing
                         .requestMatchers("/ws/**").permitAll() // WebSocket handshake

@@ -42,7 +42,7 @@ const PATHS = [
     id: 'prep',
     title: 'Interview Prep',
     blurb: 'Mocks & checklists',
-    path: '/dsa',
+    path: '/interview-prep',
     accent: '#a5b4fc',
   },
 ]
@@ -250,7 +250,11 @@ export default function HomeLandingPage() {
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => navigate(item.path)}
+                  onClick={() =>
+                    item.external
+                      ? window.open(item.external, '_blank', 'noopener,noreferrer')
+                      : navigate(item.path)
+                  }
                   className="group flex min-h-[140px] flex-col justify-center border border-[var(--border)] bg-[var(--bg-elevated)]/40 px-6 py-8 text-left transition-all duration-200 hover:border-[var(--accent-cyan)]/50 hover:bg-[var(--bg-elevated)] hover:shadow-[0_0_24px_rgba(0,212,255,0.08)] sm:min-h-0 sm:py-10"
                 >
                   <span
