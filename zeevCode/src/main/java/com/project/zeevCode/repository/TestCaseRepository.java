@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface TestCaseRepository extends JpaRepository<TestCase, UUID> {
     List<TestCase> findByProblemId(UUID problemId);
     List<TestCase> findByProblemIdAndHiddenFalse(UUID problemId);
+    void deleteByProblemId(UUID problemId);
 }

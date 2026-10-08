@@ -14,7 +14,7 @@ import com.project.zeevCode.repository.ProblemRepository;
 import com.project.zeevCode.repository.SubmissionRepository;
 import com.project.zeevCode.repository.TestCaseRepository;
 import com.project.zeevCode.repository.UserRepository;
-import com.project.zeevCode.service.NeetCodeSeederService;
+import com.project.zeevCode.service.DatasetSeederService;
 import com.project.zeevCode.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -42,7 +42,7 @@ public class AdminController {
     private final MatchRepository matchRepository;
     private final SubmissionRepository submissionRepository;
     private final com.project.zeevCode.service.UserService userService;
-    private final NeetCodeSeederService neetCodeSeederService;
+    private final DatasetSeederService datasetSeederService;
 
     // --- PROBLEM MANAGEMENT ---
     @GetMapping("/problems")
@@ -138,7 +138,13 @@ public class AdminController {
 
     @PostMapping("/seed/neetcode150")
     public ResponseEntity<SeedResult> seedNeetcode150(@RequestParam(defaultValue = "false") boolean dryRun) {
-        return ResponseEntity.ok(neetCodeSeederService.seedNeetCode150(dryRun));
+        return ResponseEntity.ok(datasetSeederService.seedFromDataset("neetcode-150", dryRun));
+    }
+
+    @PostMapping("/seed/dataset")
+    public ResponseEntity<SeedResult> seedDataset(@RequestParam String slug,
+                                                  @RequestParam(defaultValue = "false") boolean dryRun) {
+        return ResponseEntity.ok(datasetSeederService.seedFromDataset(slug, dryRun));
     }
 
     private ProblemResponse mapToProblemResponse(Problem problem) {

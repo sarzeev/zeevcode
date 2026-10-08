@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { matchApi, userApi, problemApi, statsApi, matchmakingApi } from '../services/api.js'
+import { matchApi, userApi, statsApi, matchmakingApi } from '../services/api.js'
+import { fetchProblemLists, fetchProblemList } from '../data/problemDataset.js'
+import ProblemList from '../components/ProblemList'
 import { useAuth } from '../contexts/AuthContext'
 import { Client } from '@stomp/stompjs'
 import SockJS from 'sockjs-client'
@@ -13,13 +15,6 @@ function getRank(rating) {
   return { label: 'MASTER', color: 'var(--accent-cyan)' }
 }
 
-function getDifficultyColor(diff) {
-  if (diff === 'EASY') return 'var(--accent-green)'
-  if (diff === 'MEDIUM') return '#ffd166'
-  if (diff === 'HARD') return 'var(--accent-red)'
-  return 'var(--text-secondary)'
-}
-
 export default function DashboardPage() {
   const navigate = useNavigate()
   const { currentUser, logout } = useAuth()
@@ -27,8 +22,15 @@ export default function DashboardPage() {
   
   const [leaderboard, setLeaderboard] = useState([])
   const [matches, setMatches] = useState([])
-  const [problems, setProblems] = useState([])
+  const [problemLists, setProblemLists] = useState([])
+  const [selectedListSlug, setSelectedListSlug] = useState('')
+  const [practiceData, setPracticeData] = useState({ slug: null, problems: null, error: '' })
   const [stats, setStats] = useState(null)
+
+  const practiceLoaded = Boolean(selectedListSlug) && practiceData.slug === selectedListSlug
+  const practiceProblems = practiceData.problems || []
+  const practiceLoading = !practiceLoaded
+  const practiceError = practiceLoaded ? practiceData.error : ''
   
   const [status, setStatus] = useState('idle')
   const [message, setMessage] = useState('Ready to queue')
@@ -53,13 +55,6 @@ export default function DashboardPage() {
         if (isMounted) setLeaderboard(lbRes.data || [])
 
         try {
-          const probRes = await problemApi.getAll()
-          if (isMounted) setProblems(probRes.data || [])
-        } catch (e) {
-          console.error("Failed to fetch problems", e)
-        }
-
-        try {
           const statsRes = await statsApi.getPlatformStats()
           if (isMounted) setStats(statsRes.data)
         } catch (e) {
@@ -82,6 +77,38 @@ export default function DashboardPage() {
     loadDashboardData()
     return () => { isMounted = false }
   }, [])
+
+  // Practice Mode problem lists (static dataset, e.g. NeetCode 150)
+  useEffect(() => {
+    let isMounted = true
+
+    async function loadPracticeLists() {
+      try {
+        const lists = await fetchProblemLists()
+        if (!isMounted) return
+        setProblemLists(lists)
+        if (!lists.length) {
+          setPracticeData({ slug: selectedListSlug, problems: [], error: 'No problem lists configured.' })
+          return
+        }
+        const slug = selectedListSlug || lists[0].slug
+        if (!selectedListSlug) {
+          setSelectedListSlug(slug)
+          return
+        }
+        const list = await fetchProblemList(slug)
+        if (!isMounted) return
+        setPracticeData({ slug, problems: list.problems, error: '' })
+      } catch (err) {
+        if (!isMounted) return
+        console.error('Failed to load practice problems', err)
+        setPracticeData({ slug: selectedListSlug, problems: [], error: 'Could not load practice problems.' })
+      }
+    }
+
+    loadPracticeLists()
+    return () => { isMounted = false }
+  }, [selectedListSlug])
 
   const stompClientRef = useRef(null)
 
@@ -142,8 +169,8 @@ export default function DashboardPage() {
   }
 
   function handlePracticeMode() {
-    if (!dbUser || problems.length === 0) return
-    const randomProblem = problems[Math.floor(Math.random() * problems.length)]
+    if (!dbUser || practiceProblems.length === 0) return
+    const randomProblem = practiceProblems[Math.floor(Math.random() * practiceProblems.length)]
     navigate(`/practice/${randomProblem.slug}`, { state: { userId: dbUser.id, username: dbUser.username } })
   }
 
@@ -466,24 +493,15 @@ export default function DashboardPage() {
 
             <div className="panel">
               <h2 className="panel-title">Practice Problems</h2>
-              <div style={{ maxHeight: '350px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-                <table className="problems-table" style={{ marginTop: 0 }}>
-                  <thead><tr><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Title</th><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Difficulty</th><th style={{ position: 'sticky', top: 0, background: 'var(--bg-primary)', zIndex: 1 }}>Action</th></tr></thead>
-                  <tbody>
-                  {problems.length > 0 ? (
-                    problems.map(p => (
-                      <tr key={p.id}>
-                        <td style={{ fontWeight: 'bold' }}>{p.title}</td>
-                        <td style={{ color: getDifficultyColor(p.difficulty), fontFamily: 'var(--font-mono)', fontSize: '0.8rem' }}>{p.difficulty}</td>
-                        <td><button className="btn-solve" onClick={() => navigate(`/practice/${p.slug}`, { state: { userId: dbUser.id, username: dbUser.username } })}>Solve</button></td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr><td colSpan="3" style={{ textAlign: 'center', color: 'var(--text-secondary)' }}>No problems available.</td></tr>
-                  )}
-                </tbody>
-              </table>
-              </div>
+              <ProblemList
+                lists={problemLists}
+                selectedSlug={selectedListSlug}
+                onSelectList={setSelectedListSlug}
+                problems={practiceProblems}
+                loading={practiceLoading}
+                error={practiceError}
+                onSolve={(problem) => navigate(`/practice/${problem.slug}`, { state: { userId: dbUser.id, username: dbUser.username } })}
+              />
             </div>
           </div>
 

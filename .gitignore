@@ -1,5 +1,7 @@
 secrets/
 *.json
 !vercel.json
+# Practice datasets are versioned build artifacts (manifest + mapping report + problem JSON)
+!judge-frontend/public/data/dsa/**
 .env
 *.env

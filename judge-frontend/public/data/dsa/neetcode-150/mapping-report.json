@@ -1,0 +1,61 @@
+{
+  "expected": 150,
+  "matched": 143,
+  "unmatched": [
+    {
+      "order": 113,
+      "leetcodeId": "252",
+      "title": "Meeting Rooms"
+    },
+    {
+      "order": 114,
+      "leetcodeId": "253",
+      "title": "Meeting Rooms II"
+    },
+    {
+      "order": 116,
+      "leetcodeId": "261",
+      "title": "Graph Valid Tree"
+    },
+    {
+      "order": 118,
+      "leetcodeId": "269",
+      "title": "Alien Dictionary"
+    },
+    {
+      "order": 119,
+      "leetcodeId": "271",
+      "title": "Encode and Decode Strings"
+    },
+    {
+      "order": 123,
+      "leetcodeId": "286",
+      "title": "Walls and Gates"
+    },
+    {
+      "order": 132,
+      "leetcodeId": "323",
+      "title": "Number of Connected Components in an Undirected Graph"
+    }
+  ],
+  "ambiguous": [],
+  "duplicateMatches": [],
+  "conflicts": [],
+  "warnings": [
+    "Entry #150 (981. Time Based Key-Value Store) has no difficulty in the supplied list; difficulty will be taken from upstream data.",
+    "Dataset intentionally partial: 143/150 problems. 7 supplied problem(s) are missing from the upstream dataset (see \"unmatched\"). This was explicitly approved via --allow-missing."
+  ],
+  "matchMethods": {
+    "leetcodeId": 143,
+    "exactTitle": 0,
+    "slug": 0,
+    "normalizedTitle": 0
+  },
+  "source": {
+    "upstreamRepo": "https://github.com/mcaupybugs/leetcode-problems-db",
+    "upstreamCommit": "16c26d1bcfdc17a0290f7083e86c4e9387b2e248",
+    "listFile": "scripts\\neetcode150-source.txt",
+    "generatedAt": "2026-10-08T09:13:07.382Z",
+    "upstreamProblemCount": 2913
+  }
+}

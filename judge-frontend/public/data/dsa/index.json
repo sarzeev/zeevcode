@@ -1,0 +1,9 @@
+{
+  "lists": [
+    {
+      "slug": "neetcode-150",
+      "name": "NeetCode 150",
+      "manifest": "/data/dsa/neetcode-150/manifest.json"
+    }
+  ]
+}

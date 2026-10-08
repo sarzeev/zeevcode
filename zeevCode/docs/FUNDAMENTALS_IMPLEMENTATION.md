@@ -1,6 +1,10 @@
 # ZeevCode Fundamentals — GitHub Integration Implementation
 
-## Status: 🚧 In Progress
+## Status: ✅ Implemented & deployed to production (ECS image `zeevcode-backend:2457dfd`)
+
+Last verified: 2026-09-26 — webhook push chain live end-to-end (GitHub → Vercel → ALB → ECS →
+`permitAll` → HMAC validation → async sync), targeted backend tests pass under Java 21,
+frontend `vite build` passes, Fundamentals pages lint clean.
 
 ---
 
@@ -225,3 +229,58 @@ GITHUB_WEBHOOK_SECRET=your_secret
 4. **Render on miss** — If a chapter's blob SHA has no cached render, it renders synchronously on first access, then caches. One-time cost per new chapter.
 5. **No redirect to GitHub** — All content served from ZeevCode backend.
 6. **Old video entities remain** — `playlists`, `videos`, etc. remain in DB (no migration to drop them) to avoid potential issues with existing Flyway history.
+7. **Canonical repo owner** — Sync is wired to `23se02cs102/CS-Fundamentals` (the live content repo; GitHub webhook #686103229 points at it). Repo/owner change = config change only (`github.repo` properties), no code change.
+
+---
+
+## Deployment (Fundamentals webhook path)
+
+- **Webhook**: GitHub repo `23se02cs102/CS-Fundamentals`, hook ID `686103229`, `push` event →
+  `https://zeevcode.vercel.app/api/fundamentals/webhook` → Vercel rewrite → ALB `zeevcode-alb` →
+  ECS service `zeevcode-backend-service` (cluster `zeevcode-cluster`, ap-south-1), container port 8081.
+- **Image**: built from repo `2457dfd`, pushed to ECR `zeevcode-backend` as tag `2457dfd` (+ `latest`).
+  Build context: `zeevCode/` (Dockerfile at `zeevCode/Dockerfile`, multi-stage temurin-21 maven build).
+- **Task definition**: `zeevcode-backend:4` (Fargate, awsvpc, 512/1024).
+  Secrets pulled from SSM Parameter Store: `GITHUB_WEBHOOK_SECRET` ← `/zeevcode/github-webhook-secret`
+  (never in source/image/task-def plaintext).
+- **Security**: `SecurityConfig` `permitAll()` on `POST /api/fundamentals/webhook`; all other
+  `/api/fundamentals/**` endpoints remain authenticated as before. Unsigned/invalid-signature
+  requests are rejected by HMAC validation (401 `Invalid signature`, no `WWW-Authenticate`).
+
+### Verified (2026-09-26)
+| Check | Result |
+|-------|--------|
+| Backend image deployed (ECR tag `2457dfd`) | PASS |
+| ECS task definition updated, rollout COMPLETED, old task drained | PASS |
+| `GITHUB_WEBHOOK_SECRET` present via SSM | PASS |
+| ALB signed POST `/api/fundamentals/webhook` | 200 |
+| ALB unsigned POST (no signature) | 401 `Invalid signature` (Spring Security passes through) |
+| GitHub webhook delivery (hook test `push`) | `OK` (previous deliveries were `401`) |
+| HMAC validation | PASS (GitHub-signed payload accepted) |
+| Async sync | PASS — logs: `Received GitHub push webhook, triggering async repo sync` → `GitHub repo sync completed successfully` |
+
+---
+
+## Verification / Test Notes
+
+- Backend: `mvnw -Dtest=FundamentalsControllerWebhookTest,FundamentalsWebhookSecurityConfigTest,FundamentalsRepositoryConfigurationTest test`
+  → **8/8 pass** (must run with JDK 21, e.g. `C:\Program Files\Eclipse Adoptium\jdk-21.0.8.9-hotspot`;
+  default `java` on this machine is 17/25 which breaks Mockito Byte Buddy).
+- `ZeevCodeApplicationTests.contextLoads` requires a reachable Postgres with valid credentials
+  (pre-existing; fails locally without a DB — unrelated to Fundamentals).
+- Frontend: `npm run build` (vite) passes. `npm run lint` (eslint) is clean for the Fundamentals pages
+  (`FundamentalsPage`, `SubjectLearningPage`, `ChapterPage`, `AdminFundamentalsPage`); the remaining
+  ~25 lint findings are pre-existing debt in unrelated pages (DSA/admin/auth) and were left untouched.
+
+---
+
+## Remaining Work / Known Limitations
+
+- TTL fallback scheduler (`FundamentalsRefreshScheduler`, 4h) and webhook refresh are out-of-band only;
+  a webhook delivery failure is recovered by the next TTL run — no user-visible breakage (last-known-good served).
+- Render cache invalidation on push relies on blob SHA change detection; a force-push rewriting history
+  with identical content keeps the old SHA entries (stale rows are harmless, keyed by SHA).
+- No admin UI for the new cache; `POST /api/fundamentals/admin/sync` is the manual escape hatch.
+- Legacy video-centric admin screen (`AdminFundamentalsPage`) still manages retired tables; it is no longer
+  part of the user-facing Fundamentals flow and can be retired in a separate cleanup.
+- Pre-existing `eslint` errors in non-Fundamentals pages remain (documented above).

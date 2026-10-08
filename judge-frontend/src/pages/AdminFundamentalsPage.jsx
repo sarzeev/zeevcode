@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAuth } from '../contexts/AuthContext'
 import { userApi } from '../services/api.js'
 
 export default function AdminFundamentalsPage() {
@@ -12,27 +11,6 @@ export default function AdminFundamentalsPage() {
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState('')
 
-  useEffect(() => {
-    let isMounted = true
-    async function loadData() {
-      try {
-        const userRes = await userApi.getMe()
-        if (isMounted) setDbUser(userRes.data)
-        
-        if (userRes.data.role !== 'ADMIN') {
-          navigate('/')
-          return
-        }
-
-        fetchSubjects()
-      } catch (err) {
-        if (isMounted) navigate('/')
-      }
-    }
-    loadData()
-    return () => { isMounted = false }
-  }, [navigate])
-
   const fetchSubjects = async () => {
     try {
       const res = await userApi.getAdminSubjects()
@@ -42,6 +20,27 @@ export default function AdminFundamentalsPage() {
     }
   }
 
+  useEffect(() => {
+    let isMounted = true
+    async function loadData() {
+      try {
+        const userRes = await userApi.getMe()
+        if (isMounted) setDbUser(userRes.data)
+
+        if (userRes.data.role !== 'ADMIN') {
+          navigate('/')
+          return
+        }
+
+        fetchSubjects()
+      } catch {
+        if (isMounted) navigate('/')
+      }
+    }
+    loadData()
+    return () => { isMounted = false }
+  }, [navigate])
+
   const handleCreateSubject = async (e) => {
     e.preventDefault()
     try {
@@ -49,7 +48,7 @@ export default function AdminFundamentalsPage() {
       setNewSubject({ name: '', slug: '', description: '' })
       fetchSubjects()
       setMessage('Subject created successfully')
-    } catch (err) {
+    } catch {
       setMessage('Failed to create subject')
     }
   }

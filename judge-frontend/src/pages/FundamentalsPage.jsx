@@ -7,7 +7,6 @@ import { fundamentalsApi, userApi } from '../services/api.js'
 export default function FundamentalsPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
-  const [dbUser, setDbUser] = useState(null)
   const [dashboardData, setDashboardData] = useState([])
   const [overallPercent, setOverallPercent] = useState(0)
   const [loading, setLoading] = useState(true)
@@ -20,7 +19,6 @@ export default function FundamentalsPage() {
         if (user) {
           const userRes = await userApi.getMe()
           if (isMounted) {
-            setDbUser(userRes.data)
             currentUserId = userRes.data.id
           }
         }

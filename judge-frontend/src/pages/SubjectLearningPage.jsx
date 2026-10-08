@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import SiteNav from '../components/SiteNav'
 import { fundamentalsApi, userApi } from '../services/api.js'
@@ -10,7 +10,6 @@ export default function SubjectLearningPage() {
   const { user } = useAuth()
 
   const [data, setData] = useState(null)
-  const [dbUserId, setDbUserId] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
@@ -22,7 +21,6 @@ export default function SubjectLearningPage() {
         if (user) {
           const userRes = await userApi.getMe()
           userId = userRes.data.id
-          if (isMounted) setDbUserId(userId)
         }
         const res = await fundamentalsApi.getSubjectDetails(subjectSlug, userId)
         if (isMounted) {
@@ -125,7 +123,7 @@ export default function SubjectLearningPage() {
 
         {/* Chapter List */}
         <div className="mt-8 space-y-2">
-          {data.chapters.map((chapter, idx) => (
+          {data.chapters.map((chapter) => (
             <button
               key={chapter.path}
               onClick={() => openChapter(chapter)}
