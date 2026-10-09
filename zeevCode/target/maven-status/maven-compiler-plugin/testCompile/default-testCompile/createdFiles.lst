@@ -1,4 +1,6 @@
-com/project/zeevCode/ZeevCodeApplicationTests.class
-com/project/zeevCode/controller/FundamentalsControllerWebhookTest.class
-com/project/zeevCode/config/FundamentalsWebhookSecurityConfigTest.class
-com/project/zeevCode/service/FundamentalsRepositoryConfigurationTest.class
+com\project\zeevCode\ZeevCodeApplicationTests.class
+com\project\zeevCode\service\PaymentServiceTest.class
+com\project\zeevCode\controller\FundamentalsControllerWebhookTest.class
+com\project\zeevCode\controller\PaymentControllerTest.class
+com\project\zeevCode\service\FundamentalsRepositoryConfigurationTest.class
+com\project\zeevCode\config\FundamentalsWebhookSecurityConfigTest.class

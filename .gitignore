@@ -3,5 +3,7 @@ secrets/
 !vercel.json
 # Practice datasets are versioned build artifacts (manifest + mapping report + problem JSON)
 !judge-frontend/public/data/dsa/**
+# product/ is a separate repo (github.com/ginclair-dev/product) — not part of zeevcode
+product/
 .env
 *.env
